@@ -13,9 +13,10 @@ WITH (
 /**
 ALTER TABLE shp.vs_dl_tracking ADD sized_weight numeric NULL;
 ALTER TABLE shp.vs_dl_tracking ADD sized_volume numeric NULL;
-ALTER TABLE shp.vs_dl_tracking ADD height numeric NULL;
-ALTER TABLE shp.vs_dl_tracking ADD width numeric NULL;
-ALTER TABLE shp.vs_dl_tracking ADD length numeric NULL;
+ALTER TABLE shp.vs_dl_tracking ADD shp_height numeric NULL;
+ALTER TABLE shp.vs_dl_tracking ADD shp_width numeric NULL;
+ALTER TABLE shp.vs_dl_tracking ADD shp_length numeric NULL;
 ALTER TABLE shp.vs_dl_tracking ADD oversized_weight numeric NULL;
 ALTER TABLE shp.vs_dl_tracking ADD oversized_volume numeric NULL;
+ALTER TABLE shp.vs_dl_tracking ADD doc_date timestamp without time zone;
 **/

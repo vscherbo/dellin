@@ -29,6 +29,7 @@ conf_file_name = "dl.conf"
 
 parser = argparse.ArgumentParser(description='get tracking numbers of Dellin')
 parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
+parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
 parser.add_argument('--start_date',
                     help="The Start Date - format YYYY-MM-DD",
                     required=False,
@@ -66,12 +67,13 @@ logging.debug("SELECT * FROM shp_dl_tn_query('{}');".format(args.start_date))
 dl = DellinAPI(ark_appkey, user, pw)
 logging.info("logged in sess_id={0}".format(dl.sessionID))
 
-pg_srv = 'vm-pg.arc.world'
-conn = psycopg2.connect("host='" + pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
+# args.!!!  pg_srv = 'vm-pg.arc.world'
+conn = psycopg2.connect("host='" + args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
 # TODO check return code
 
-shp_cmd_template = "INSERT INTO shp.vs_dl_tracking(tracking_code, shipment_dt, src_inn, dst_inn) " \
-                   "VALUES(%s, %s, %s, %s) ON CONFLICT DO NOTHING;"
+shp_cmd_template = """INSERT INTO shp.vs_dl_tracking(tracking_code, shipment_dt, src_inn, dst_inn, 
+sized_weight, sized_volume, shp_height, shp_width, shp_length, oversized_weight, oversized_volume, doc_date)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING;"""
 
 curs = conn.cursor()
 # curs.execute("SELECT dl_dt,	dl_sender, dl_receiver FROM vw_dl_shipping ORDER BY dl_dt;")
@@ -93,8 +95,25 @@ for (dl_dt, arg_sender, arg_receiver) in rows:
         # logging.info(tracker_res["orders"]["tracker"][0]["order"]['docNumber'])
         for dl_order in tracker_res["orders"]["tracker"]:
             tn = dl_order["order"]["docNumber"]
+            sz_weight = dl_order["order"]["sizedWeight"]
+            sz_volume = dl_order["order"]["sizedVolume"]
+            doc_date = dl_order["order"]["docDate"].replace('T', ' ')
+            shp_height = dl_order["order"]["height"]
+            shp_width = dl_order["order"]["width"]
+            shp_length = dl_order["order"]["length"]
+            osz_weight = dl_order["order"]["oversizedWeight"]
+            osz_volume = dl_order["order"]["oversizedVolume"]
             logging.debug('got order={}'.format(dl_order["order"]))
-            shp_cmd = curs.mogrify(shp_cmd_template, (tn, dl_dt, arg_sender, arg_receiver))
+            shp_cmd = curs.mogrify(shp_cmd_template, (tn, dl_dt, arg_sender, arg_receiver,
+                            sz_weight,
+                            sz_volume,
+                            shp_height,
+                            shp_width,
+                            shp_length,
+                            osz_weight,
+                            osz_volume,
+                            doc_date
+                            ))
             logging.info(shp_cmd)
             curs.execute(shp_cmd)
             conn.commit()
