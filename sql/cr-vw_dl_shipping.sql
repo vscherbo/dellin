@@ -7,5 +7,8 @@ CREATE OR REPLACE VIEW arc_energo.vw_dl_shipping AS
    FROM "Счета" b
      JOIN "Предприятия" c ON b."Код" = c."Код"
      JOIN "Фирма" f ON f."КлючФирмы" = b."фирма"
-  WHERE NOT (b."№ счета" IN ( SELECT vw_splitted_bill."предок"
-           FROM vw_splitted_bill)) AND b."инфо"::text ~ similar_escape('%Забрал%.*[0-9].[0-9]+%отметил%'::text, NULL::text) AND b."ОтгрузкаКем"::text ~~* '%лини%'::text AND b."Дата счета" >= '2018-02-01 00:00:00'::timestamp without time zone AND b."ДокТК" IS NULL;
+  WHERE b."№ счета" NOT IN (SELECT excl_bill_no FROM shp.vs_dl_exclusion)
+        AND (b."№ счета" NOT IN ( SELECT vw_splitted_bill."предок"
+           FROM vw_splitted_bill))
+        AND b."инфо"::text ~ similar_escape('%Забрал%.*[0-9].[0-9]+%отметил%'::text, NULL::text) 
+        AND b."ОтгрузкаКем"::text ~~* '%лини%'::text AND b."Дата счета" >= '2018-02-01 00:00:00'::timestamp without time zone AND b."ДокТК" IS NULL;
