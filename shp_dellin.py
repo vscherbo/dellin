@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import types
 import requests
 
 
@@ -14,8 +13,16 @@ class DellinAPI:
     url_calculator = '{}/v1/public/calculator.json'.format(host)
     url_logout = '{}/v1/customers/logout.json'.format(host)
     url_orders = '{}/v2/customers/orders.json'.format(host)
-    url_counteragents = '{}/v1/customers/book/counteragents.json'.format(host)
+    url_book_counteragents = '{}/v1/customers/book/counteragents.json'.format(host)
+    url_counteragents = '{}/v1/customers/counteragents.json'.format(host)
     url_addresses = '{}/v1/customers/book/addresses.json'.format(host)
+    url_request = '{}/v1/customers/request.json'.format(host)
+    url_dir_countries = '{}/v1/public/countries.json'.format(host)
+    url_dir_opf_list = '{}/v1/public/opf_list.json'.format(host)
+    url_dir_places = '{}/v1/public/places.json'.format(host)
+    url_dir_streets = '{}/v1/public/streets.json'.format(host)
+    url_book_counteragents_update = '{}/v1/customers/book/counteragents/update.json'.format(host)
+
     headers = {'Content-type': 'application/javascript'}
 
     def __init__(self, app_key, login=None, password=None):
@@ -26,8 +33,8 @@ class DellinAPI:
         self.text = ''
 
         if login and password:
-            assert isinstance(login, types.StringType)
-            assert isinstance(password, types.StringType)
+            assert isinstance(login, str)
+            assert isinstance(password, str)
             self.auth(login, password)
 
     def auth(self, login, password):
@@ -77,7 +84,8 @@ class DellinAPI:
             ret = r.json()
         finally:
             if r is not None:
-                self.text = r.text.encode('utf-8')
+                self.text = r.text
+                # P2 self.text = r.text.encode('utf-8')
 
         return ret
 
@@ -94,6 +102,10 @@ class DellinAPI:
         self.payload["docid"] = docid
         return self.dl_get(self.url_orders)
 
+    def dl_book_counteragents(self):
+        self.payload = self.customers_auth()
+        return self.dl_get(self.url_book_counteragents)
+
     def dl_counteragents(self):
         self.payload = self.customers_auth()
         return self.dl_get(self.url_counteragents)
@@ -106,6 +118,42 @@ class DellinAPI:
     def dl_any(self, url):
         self.payload = self.customers_auth()
         return self.dl_get(url)
+
+    def dl_request(self, arc_shipment_id):
+        self.payload = self.customers_auth()
+        """
+        SELECT payload's params from PG by arc_shipment_id
+        """
+        return self.dl_get(self.url_request)
+
+    def dl_countries(self):
+        self.payload = self.public_auth()
+        return self.dl_get(self.url_dir_countries)
+
+    def dl_opf_list(self):
+        self.payload = self.public_auth()
+        return self.dl_get(self.url_dir_opf_list)
+
+    def dl_places(self):
+        self.payload = self.public_auth()
+        return self.dl_get(self.url_dir_places)
+
+    def dl_streets(self):
+        self.payload = self.public_auth()
+        return self.dl_get(self.url_dir_streets)
+
+    def dl_book_counteragents_update(self, form, name, inn, street_kladr, house, building=None, structure=None, flat=None):
+        self.payload = self.customers_auth()
+        self.payload["form"] = form
+        self.payload["name"] = name
+        self.payload["inn"] = inn
+        self.payload["juridicalAddress"] = '{"street": "{}"}'.format(street_kladr) 
+        self.payload["house"] = house
+        self.payload["building"] = building
+        self.payload["structure"] = structure
+        self.payload["flat"] = flat
+        return self.payload
+        # return self.dl_get(self.url_book_counteragents_update)
 
     def dl_logout(self):
         self.payload = self.customers_auth()
