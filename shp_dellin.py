@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import logging
 import requests
+import json
 
 
 class DellinAPI:
@@ -41,7 +43,7 @@ class DellinAPI:
         self.payload = {'login': login,
                         'password': password}
         self.payload.update(self.public_auth())
-        r = self.dl_get(self.url_login)
+        r = self.dl_post(self.url_login)
         if r is not None:
             self.sessionID = r['sessionID']
 
@@ -60,13 +62,15 @@ class DellinAPI:
     def __exception_fmt__(tag, exception):
         return '{0} msg={1}'.format(tag, str(exception).encode('utf-8'))
 
-    def dl_get(self, get_url):
+    def dl_post(self, post_url):
         self.payload['appKey'] = self.app_key
         ret = None
         r = None
         try:
-            logging.debug('{0}/{1}'.format(get_url, self.payload))
-            r = requests.post(get_url, json=self.payload)
+            loc_data = json.dumps(self.payload)
+            logging.debug("url={0}, data={1}".format(post_url, loc_data))
+            # r = requests.post(post_url, json=self.payload, headers=self.headers)
+            r = requests.post(post_url, data=json.dumps(self.payload), headers=self.headers)
             logging.debug("status_code={}".format(r.status_code))
             r.raise_for_status()
         except requests.exceptions.Timeout as e:
@@ -95,66 +99,73 @@ class DellinAPI:
         self.payload["receiver"] = {"inn": receiver}
         self.payload["date_start"] = date_start  # "2017-10-19"
         self.payload["date_end"] = date_end  # "2017-10-19"
-        return self.dl_get(self.url_tracker_adv)
+        return self.dl_post(self.url_tracker_adv)
 
     def dl_orders(self, docid):
         self.payload = self.customers_auth()
         self.payload["docid"] = docid
-        return self.dl_get(self.url_orders)
+        return self.dl_post(self.url_orders)
 
     def dl_book_counteragents(self):
         self.payload = self.customers_auth()
-        return self.dl_get(self.url_book_counteragents)
+        return self.dl_post(self.url_book_counteragents)
 
     def dl_counteragents(self):
         self.payload = self.customers_auth()
-        return self.dl_get(self.url_counteragents)
+        return self.dl_post(self.url_counteragents)
 
     def dl_addresses(self, ca_id):
         self.payload = self.customers_auth()
         self.payload["counteragentID"] = ca_id
-        return self.dl_get(self.url_addresses)
+        return self.dl_post(self.url_addresses)
 
     def dl_any(self, url):
         self.payload = self.customers_auth()
-        return self.dl_get(url)
+        return self.dl_post(url)
 
     def dl_request(self, arc_shipment_id):
         self.payload = self.customers_auth()
         """
         SELECT payload's params from PG by arc_shipment_id
         """
-        return self.dl_get(self.url_request)
+        return self.dl_post(self.url_request)
 
     def dl_countries(self):
         self.payload = self.public_auth()
-        return self.dl_get(self.url_dir_countries)
+        return self.dl_post(self.url_dir_countries)
 
     def dl_opf_list(self):
         self.payload = self.public_auth()
-        return self.dl_get(self.url_dir_opf_list)
+        return self.dl_post(self.url_dir_opf_list)
 
     def dl_places(self):
         self.payload = self.public_auth()
-        return self.dl_get(self.url_dir_places)
+        return self.dl_post(self.url_dir_places)
 
     def dl_streets(self):
         self.payload = self.public_auth()
-        return self.dl_get(self.url_dir_streets)
+        return self.dl_post(self.url_dir_streets)
 
-    def dl_book_counteragents_update(self, form, name, inn, street_kladr, house, building=None, structure=None, flat=None):
+    def dl_book_counteragents_update(self, opf_uid, name, inn, street_kladr, house, building=None, structure=None, flat=None):
         self.payload = self.customers_auth()
-        self.payload["form"] = form
-        self.payload["name"] = name
-        self.payload["inn"] = inn
-        self.payload["juridicalAddress"] = '{"street": "{}"}'.format(street_kladr) 
-        self.payload["house"] = house
-        self.payload["building"] = building
-        self.payload["structure"] = structure
-        self.payload["flat"] = flat
-        return self.payload
-        # return self.dl_get(self.url_book_counteragents_update)
+        self.payload.update({"form": opf_uid})
+        self.payload.update({"name": name})
+        self.payload.update({"inn": inn})
+        loc_addr = '"street": "{}", "house": "{}"'.format(street_kladr, house)
+        # self.payload["juridicalAddress"] = """{{"street": "{}", "house": "{}", "building": "{}", "structure": "{}", "flat": "{}"}}""".format(\
+        #        street_kladr, house, building, structure, flat)
+        if building:
+            loc_addr = '{}, "building": "{}"'.format(loc_addr, building)
+        if structure:
+            loc_addr = '{}, "structure": "{}"'.format(loc_addr, structure)
+        if flat:
+            loc_addr = '{}, "flat": "{}"'.format(loc_addr, flat)
+
+        loc_addr = '{{{0}}}'.format(loc_addr)
+        self.payload.update({"juridicalAddress": json.loads(loc_addr)})
+        # DEBUG return json.dumps(self.payload)
+        return self.dl_post(self.url_book_counteragents_update)
 
     def dl_logout(self):
         self.payload = self.customers_auth()
-        return self.dl_get(self.url_logout)
+        return self.dl_post(self.url_logout)
