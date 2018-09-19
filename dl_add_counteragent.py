@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser(description='add counteragent to address book o
 parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
 parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
 parser.add_argument('--code', type=int, help='arc_energo.Предприятия.Код')
-parser.add_argument('--log_to_file', type=bool, default=False, help='log destination')
+parser.add_argument('--log_to_file', type=str, default='stdout', help='log destination')
 parser.add_argument('--log_level', type=str, default="DEBUG", help='log level')
 args = parser.parse_args()
 
@@ -37,12 +37,10 @@ numeric_level = getattr(logging, args.log_level, None)
 if not isinstance(numeric_level, int):
     raise ValueError('Invalid log level: %s' % numeric_level)
 
-if args.log_to_file:
-    log_dir = ''
-    log_file = log_dir + prg_name + ".log"
-    logging.basicConfig(filename=log_file, format=log_format, level=numeric_level)
-else:
+if 'stdout' == args.log_to_file:
     logging.basicConfig(stream=sys.stdout, format=log_format, level=numeric_level)
+else:
+    logging.basicConfig(filename=args.log_to_file, format=log_format, level=numeric_level)
 
 
 config = configparser.ConfigParser(allow_no_value=True)
