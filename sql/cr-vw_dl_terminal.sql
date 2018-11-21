@@ -7,5 +7,5 @@ SELECT
             jsonb_array_elements( jsonb_array_elements(values)->'city')
         )
     ).*
-from shp.dl_terminals_json)
+from ext.dl_terminals_json)
 SELECT "name" AS city, "cityID", (jsonb_populate_record(null::shp.t_dl_terminals, jsonb_array_elements(terminals->'terminal'))).* FROM dl_city;
