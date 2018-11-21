@@ -16,15 +16,18 @@ class DellinAPI:
     url_calculator = '{}/v1/public/calculator.json'.format(host)
     url_logout = '{}/v1/customers/logout.json'.format(host)
     url_orders = '{}/v2/customers/orders.json'.format(host)
-    url_book_counteragents = '{}/v1/customers/book/counteragents.json'.format(host)
-    url_counteragents = '{}/v1/customers/counteragents.json'.format(host)
-    url_addresses = '{}/v1/customers/book/addresses.json'.format(host)
+    url_book_counteragents = '{}/v1/customers/book/counteragents.json'.format(host)  # справочник контрагентов
+    url_counteragents = '{}/v1/customers/counteragents.json'.format(host)  # наши фирмы, подключённые к ЛК
+    url_addresses = '{}/v1/customers/book/addresses.json'.format(host)  # список адресов контрагента
     url_dir_countries = '{}/v1/public/countries.json'.format(host)
     url_dir_opf_list = '{}/v1/public/opf_list.json'.format(host)
     url_dir_places = '{}/v1/public/places.json'.format(host)
     url_dir_streets = '{}/v1/public/streets.json'.format(host)
-    url_book_address = '{}/v1/customers/book/address.json'.format(host)
+    url_book_address = '{}/v1/customers/book/address.json'.format(host)  # Получение списка контактных лиц и телефонов
     url_book_counteragents_update = '{}/v1/customers/book/counteragents/update.json'.format(host)
+    url_phones_update = '{}/v1/customers/book/phones/update.json'.format(host)  # добавить или обновить телефон по адресу
+    url_contacts_update = '{}/v1/customers/book/contacts/update.json'.format(host)  # добавить или обновить контакт по адресу
+    url_addresses_update = '{}/v1/customers/book/addresses/update.json'.format(host)  # добавить или обновить адрес контрагента
     url_request = '{}/v1/customers/request.json'.format(host)
     # headers = {'Content-type': 'application/javascript'}
     headers = {'Content-type': 'application/json'}
@@ -71,7 +74,7 @@ class DellinAPI:
         r = None
         try:
             loc_data = json.dumps(self.payload)
-            logging.debug("url={0}, data={1}".format(post_url, re.sub(r"'password': (.*)}", "'*****'",loc_data)))
+            logging.debug("url={0}, data={1}".format(post_url, re.sub(r'"password": (.*)}', "'*****'",loc_data)))
             r = requests.post(post_url, json=self.payload, headers=self.headers)
             self.status_code = r.status_code
             logging.debug("status_code={}".format(r.status_code))
@@ -123,11 +126,17 @@ class DellinAPI:
         return self.dl_post(self.url_counteragents)
 
     def dl_book_address(self, addr_id):
+        """
+        Получение списка контактных лиц и телефонов
+        """
         self.payload = self.customers_auth()
         self.payload["addressID"] = addr_id
         return self.dl_post(self.url_book_address)
 
     def dl_addresses(self, ca_id):
+        """
+        список адресов контрагента
+        """
         self.payload = self.customers_auth()
         self.payload["counteragentID"] = ca_id
         return self.dl_post(self.url_addresses)
@@ -191,6 +200,78 @@ class DellinAPI:
         self.payload.update({"juridicalAddress": json.loads(loc_addr)})
         # DEBUG return json.dumps(self.payload)
         return self.dl_post(self.url_book_counteragents_update)
+
+    def dl_contact_add(self, addr_id, contact_name):
+        self.payload = self.customers_auth()
+        self.payload.update({"addressID": addr_id})
+        self.payload.update({"contact": contact_name})
+        return self.dl_post(self.url_contacts_update)
+
+    def dl_contact_update(self, person_id, contact_name):
+        self.payload = self.customers_auth()
+        self.payload.update({"personID": person_id})
+        self.payload.update({"contact": contact_name})
+        return self.dl_post(self.url_contacts_update)
+
+    def dl_phone_add(self, addr_id, phone, add_num=None):
+        self.payload = self.customers_auth()
+        self.payload.update({"addressID": addr_id})
+        self.payload.update({"phoneNumber": phone})
+        self.payload.update({"addNumber": add_num})
+        return self.dl_post(self.url_phones_update)
+
+    def dl_phone_update(self, phone_id, phone, add_num=None):
+        self.payload = self.customers_auth()
+        self.payload.update({"phoneID": phone_id})
+        self.payload.update({"phoneNumber": phone})
+        self.payload.update({"addNumber": add_num})
+        return self.dl_post(self.url_phones_update)
+
+    def dl_address_add(self, ca_id, street_kladr, house, building=None, structure=None, flat=None):
+        self.payload = self.customers_auth()
+        self.payload.update({"counteragentID": ca_id})
+        self.payload.update({"street": street_kladr})
+        self.payload.update({"house": house})
+        if building:
+            self.payload.update({"building": building})
+        if structure:
+            self.payload.update({"structure": structure})
+        if flat:
+            self.payload.update({"flat": flat})
+        return self.dl_post(self.url_addresses_update)
+
+    def dl_address_update(self, addr_id, street_kladr=None, house=None, building=None, structure=None, flat=None): 
+        if street_kladr is None and house is None and building is None and structure is None and flat is None:
+            logging.warning('Nothing to update, all arguments are None')
+            return json(None)
+
+        self.payload = self.customers_auth()
+        self.payload.update({"addressID": addr_id})
+        if street_kladr:
+            self.payload.update({"street": street_kladr})
+        if house:
+            self.payload.update({"house": house})
+        if building:
+            self.payload.update({"building": building})
+        if structure:
+            self.payload.update({"structure": structure})
+        if flat:
+            self.payload.update({"flat": flat})
+
+        return self.dl_post(self.url_addresses_update)
+
+    def dl_address_term_add(self, ca_id, term_id):
+        self.payload = self.customers_auth()
+        self.payload.update({"counteragentID": ca_id})
+        self.payload.update({"terminal_id": term_id})
+        return self.dl_post(self.url_addresses_update)
+
+    def dl_address_term_update(self, addr_id, term_id):
+
+        self.payload = self.customers_auth()
+        self.payload.update({"addressID": addr_id})
+        self.payload.update({"terminal_id": term_id})
+        return self.dl_post(self.url_addresses_update)
 
     def dl_logout(self):
         self.payload = self.customers_auth()
