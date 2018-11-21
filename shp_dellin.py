@@ -4,6 +4,7 @@
 import logging
 import requests
 import json
+import re
 
 
 class DellinAPI:
@@ -18,14 +19,15 @@ class DellinAPI:
     url_book_counteragents = '{}/v1/customers/book/counteragents.json'.format(host)
     url_counteragents = '{}/v1/customers/counteragents.json'.format(host)
     url_addresses = '{}/v1/customers/book/addresses.json'.format(host)
-    url_request = '{}/v1/customers/request.json'.format(host)
     url_dir_countries = '{}/v1/public/countries.json'.format(host)
     url_dir_opf_list = '{}/v1/public/opf_list.json'.format(host)
     url_dir_places = '{}/v1/public/places.json'.format(host)
     url_dir_streets = '{}/v1/public/streets.json'.format(host)
+    url_book_address = '{}/v1/customers/book/address.json'.format(host)
     url_book_counteragents_update = '{}/v1/customers/book/counteragents/update.json'.format(host)
-
-    headers = {'Content-type': 'application/javascript'}
+    url_request = '{}/v1/customers/request.json'.format(host)
+    # headers = {'Content-type': 'application/javascript'}
+    headers = {'Content-type': 'application/json'}
 
     def __init__(self, app_key, login=None, password=None):
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -33,6 +35,7 @@ class DellinAPI:
         self.sessionID = None
         self.payload = {}
         self.text = ''
+        self.status_code = 0
 
         if login and password:
             assert isinstance(login, str)
@@ -68,10 +71,12 @@ class DellinAPI:
         r = None
         try:
             loc_data = json.dumps(self.payload)
-            logging.debug("url={0}, data={1}".format(post_url, loc_data))
-            # r = requests.post(post_url, json=self.payload, headers=self.headers)
-            r = requests.post(post_url, data=json.dumps(self.payload), headers=self.headers)
+            logging.debug("url={0}, data={1}".format(post_url, re.sub(r"'password': (.*)}", "'*****'",loc_data)))
+            r = requests.post(post_url, json=self.payload, headers=self.headers)
+            self.status_code = r.status_code
             logging.debug("status_code={}".format(r.status_code))
+            # logging.debug("r.headers={}".format(r.headers))
+            # logging.debug("r.url={}".format(r.url))
             r.raise_for_status()
         except requests.exceptions.Timeout as e:
             # Maybe set up for a retry, or continue in a retry loop
@@ -86,6 +91,7 @@ class DellinAPI:
             logging.error(self.__exception_fmt__('RequestException', e))
         else:
             ret = r.json()
+            # logging.debug("r.text={}".format(r.text))
         finally:
             if r is not None:
                 self.text = r.text
@@ -110,9 +116,16 @@ class DellinAPI:
         self.payload = self.customers_auth()
         return self.dl_post(self.url_book_counteragents)
 
-    def dl_counteragents(self):
+    def dl_counteragents(self, full_info = False):
         self.payload = self.customers_auth()
+        if full_info:
+            self.payload["full_info"] = str(full_info)
         return self.dl_post(self.url_counteragents)
+
+    def dl_book_address(self, addr_id):
+        self.payload = self.customers_auth()
+        self.payload["addressID"] = addr_id
+        return self.dl_post(self.url_book_address)
 
     def dl_addresses(self, ca_id):
         self.payload = self.customers_auth()
@@ -120,14 +133,27 @@ class DellinAPI:
         return self.dl_post(self.url_addresses)
 
     def dl_any(self, url):
-        self.payload = self.customers_auth()
+        self.payload = self.public_auth()
         return self.dl_post(url)
 
     def dl_request(self, arc_shipment_id):
         self.payload = self.customers_auth()
         """
         SELECT payload's params from PG by arc_shipment_id
+        sender_id, receiver_id, proc_date, totalWeight, totalVolume, quantity, maxLength, maxHeight, maxWidth, maxWeight):
         """
+        self.payload.update({"form": opf_uid})
+        self.payload.update({"name": name})
+        if building:
+            loc_addr = '{}, "building": "{}"'.format(loc_addr, building)
+        if structure:
+            loc_addr = '{}, "structure": "{}"'.format(loc_addr, structure)
+        if flat:
+            loc_addr = '{}, "flat": "{}"'.format(loc_addr, flat)
+
+        loc_addr = '{{{0}}}'.format(loc_addr)
+        self.payload.update({"sender": json.loads(loc_addr)})
+
         return self.dl_post(self.url_request)
 
     def dl_countries(self):

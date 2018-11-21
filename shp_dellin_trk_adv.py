@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -6,8 +6,7 @@ import logging
 import psycopg2
 import argparse
 import time
-import ConfigParser
-import io
+import configparser
 from shp_dellin import DellinAPI
 import sys
 from datetime import datetime
@@ -54,13 +53,12 @@ if args.log_to_file:
 else:
     logging.basicConfig(stream=sys.stdout, format=log_format, level=numeric_level)
 
-with open(args.conf) as f:
-    config = ConfigParser.RawConfigParser(allow_no_value=True)
-    config.readfp(io.BytesIO(f.read()))
+config = configparser.ConfigParser(allow_no_value=True)
+config.read(args.conf) 
 
-ark_appkey = config.get('dl_login', 'ark_appkey')
-user = config.get('dl_login', 'user')
-pw = config.get('dl_login', 'pw')
+ark_appkey = config['dl_login']['ark_appkey']
+user = config['dl_login']['user']
+pw = config['dl_login']['pw']
 
 logging.debug("SELECT * FROM shp_dl_tn_query('{}');".format(args.start_date))
 
@@ -87,7 +85,7 @@ for (dl_dt, arg_sender, arg_receiver) in rows:
     if tracker_res is None:
         logging.error("dl_tracker_adv res is None")
     elif tracker_res["errormsg"] != "":
-        logging.error("dl_tracker_adv errormsg={0}".format(tracker_res["errormsg"].encode('utf-8')))
+        logging.error("dl_tracker_adv errormsg={0}".format(tracker_res["errormsg"]))
         # OBSOLETE shp_cmd = curs.mogrify(shp_cmd_template, (None, None, 3))  # 3 - статус "ошибка"
         # curs.execute(shp_cmd)
     else:
