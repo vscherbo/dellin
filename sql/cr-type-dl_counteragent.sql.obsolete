@@ -3,12 +3,12 @@ create type shp.dl_counteragent as (
 "id" integer,
 "uid" UUID,
 "lastUpdate" timestamp,
-"name" text,
-"form" text,
-"type" text,
-"inn" text,
+"name" varchar,
+"form" varchar,
+"type" varchar,
+"inn" varchar,
 "addresses" integer,
-"Email" text,
-"Phone" text,
+"Email" varchar,
+"Phone" varchar,
 "document" json
 );
