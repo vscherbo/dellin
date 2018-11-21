@@ -19,8 +19,8 @@ BEGIN
     -- --conf= ... --log_level=INFO
     IF cmd IS NULL 
     THEN 
-       ret_str := 'update-single-modification cmd IS NULL';
-       RAISE '%', ret_str.err_str ; 
+       ret_str := 'dl_add_counteragent cmd IS NULL';
+       RAISE '%', ret_str ; 
     END IF;
 
     -- ret_str := public.exec_paramiko(site, 22, 'uploader'::VARCHAR, cmd);
@@ -28,7 +28,7 @@ BEGIN
     
     IF ret_str <> ''
     THEN 
-       RAISE 'dl_add_counteragent cmd=%^err_str=[%]', cmd, ret_str; 
+       RAISE 'dl_add_counteragent cmd=%^ret_str=[%]', cmd, ret_str; 
     END IF;
     
     return ret_str;
