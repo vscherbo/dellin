@@ -1,0 +1,7 @@
+[dl_login]
+ark_appkey=00000000-0000-0000-0000-000000000000
+user=email@domain
+pw=somepassword
+
+[dadata_login]
+API_KEY=0000000000000000000000000000000000000000
