@@ -1,4 +1,4 @@
-drop VIEW shp.vw_dl_addr_phone_ext;
+drop VIEW IF EXISTS shp.vw_dl_addr_phone_ext;
 CREATE OR REPLACE VIEW shp.vw_dl_addr_phone_ext
 AS
 SELECT
@@ -20,6 +20,5 @@ SELECT
     LEFT JOIN shp.dl_addr_contacts_json c ON c.addr_id = a.id;
 
 -- Permissions
-
-ALTER TABLE shp.vw_dl_addr_phone_ext OWNER TO arc_energo;
-GRANT ALL ON TABLE shp.vw_dl_addr_phone_ext TO arc_energo;
+-- ALTER TABLE shp.vw_dl_addr_phone_ext OWNER TO arc_energo;
+-- GRANT ALL ON TABLE shp.vw_dl_addr_phone_ext TO arc_energo;

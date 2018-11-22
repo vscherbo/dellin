@@ -77,28 +77,34 @@ class DellinAPI:
             logging.debug("url={0}, data={1}".format(post_url, re.sub(r'"password": (.*)}', "'*****'",loc_data)))
             r = requests.post(post_url, json=self.payload, headers=self.headers)
             self.status_code = r.status_code
+            self.err_msg = None
             logging.debug("status_code={}".format(r.status_code))
             # logging.debug("r.headers={}".format(r.headers))
             # logging.debug("r.url={}".format(r.url))
             r.raise_for_status()
         except requests.exceptions.Timeout as e:
             # Maybe set up for a retry, or continue in a retry loop
-            logging.error(self.__exception_fmt__('Timeout', e))
+            self.err_msg = self.__exception_fmt__('Timeout', e)
         except requests.exceptions.TooManyRedirects as e:
             # Tell the user their URL was bad and try a different one
-            logging.error(self.__exception_fmt__('TooManyRedirects', e))
+            self.err_msg = self.__exception_fmt__('TooManyRedirects', e)
         except requests.exceptions.HTTPError as e:
-            logging.error(self.__exception_fmt__('HTTPError', e))
+            self.err_msg = self.__exception_fmt__('HTTPError', e)
         except requests.exceptions.RequestException as e:
             # catastrophic error. bail.
-            logging.error(self.__exception_fmt__('RequestException', e))
+            self.err_msg = self.__exception_fmt__('RequestException', e)
         else:
             ret = r.json()
             # logging.debug("r.text={}".format(r.text))
         finally:
+            if self.err_msg:
+                logging.error(self.err_msg)
+            if 200 != self.status_code:
+                logging.error("dl_post failed, status_code={}".format(self.status_coder))
+
             if r is not None:
                 self.text = r.text
-                # P2 self.text = r.text.encode('utf-8')
+                # python2 self.text = r.text.encode('utf-8')
 
         return ret
 

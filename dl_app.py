@@ -37,16 +37,25 @@ class DL_app():
             self.dl = DellinAPI(self.ark_appkey, self.user, self.pw)
         else:    
             self.dl = DellinAPI(self.ark_appkey)
-        logging.info("logged in sess_id={0}".format(self.dl.sessionID))
+        loc_return = (200 == self.dl.status_code)
+        if loc_return:
+            logging.info("logged in sess_id={0}".format(self.dl.sessionID))
+        else:
+            logging.error("loggin error. status_code={0}".format(self.dl.status_code))
+        return loc_return
 
 
     def db_login(self):
         logging.debug('args={}'.format(self.args))
-        if self.args.pg_srv:
+        if self.args.pg_srv is not None:
             self.conn = psycopg2.connect("host='" + self.args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
 
     def logout(self):
         self.dl.dl_logout()
+        if self.args.pg_srv is not None:
+            if self.conn:
+                self.conn.commit()
+                self.conn.close()
 
 conf_file_name = "dl.conf"
 parser = argparse.ArgumentParser()
