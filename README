@@ -39,4 +39,4 @@ truncate table ext.dl_counteragents_json;
   * delete from ext.dl_addresses_json where ca_id=<CA_ID>;
   * \copy ext.dl_addresses_json from 'ca_<CA_ID>_addr.csv' with (format csv, delimiter '^');
   * delete from ext.dl_address where ca_id=<CA_ID>; 
-  * insert into ext.dl_addresses (select * from shp.vw_dl_addresses where ca_id=<CA_ID>;
+  * insert into ext.dl_addresses (select *,0 from shp.vw_dl_addresses where ca_id=<CA_ID>;
