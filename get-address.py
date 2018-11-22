@@ -50,5 +50,5 @@ if 200 == dl.status_code:
 else:
     sys.exit(2)
 
-# \copy shp.dl_addresses_json(ca_id, jb) from 'ca_9999999_addr.csv' with (format csv, delimiter '^');
+# \copy ext.dl_addresses_json(ca_id, jb) from 'ca_9999999_addr.csv' with (format csv, delimiter '^');
 

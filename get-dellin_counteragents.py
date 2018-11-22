@@ -50,11 +50,13 @@ logging.info("=== counteragents ===")
 parsed = dl.text # .decode('utf-8')
 with open('res-counteragents.txt', 'w') as of:
     of.write(dl.text.replace('\n', ''))
-#print(dl.text.replace('\n', ''))
-# logging.info(parsed)
+
+"""
+truncate table ext.dl_counteragents_json;
+\copy ext.dl_counteragents_json from res-counteragents.txt;
+"""
+
 
 logging.info('res_count={}'.format(1 + len(counteragents_res)))
-# logging.info('text_count={}'.format(1 + len(json.loads(dl.text.decode('utf-8')))))
 
-#logout
 counteragents_res = dl.dl_logout()
