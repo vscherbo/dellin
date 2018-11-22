@@ -1,0 +1,42 @@
+sed ':a;N;$!ba;s/\n/ /g' res-counteragents.txt > counteragents.json
+
+
+tr -d '\n' < dl_dict.tmp | sed 's/"/""/g' > t3
+echo -n \"[" > before
+cat before t3 after >t4
+\copy shp.dl_terminals_json from t4 with(format csv);
+#
+
+\copy shp.dl_counteragents_json from counteragents.json
+
+
+select values->>'Год/Месяц' as year, values->>'Май' as May  from (select json_array_elements(values::json) as values from gov_holiday_json) j;
+
+
+select ARRAY[6]::text[] <@ regexp_split_to_array(may, ',')::text[] from (select values->>'Год/Месяц' as year, values->>'Май' as May  from (select json_array_elements(values::json) as values from gov_holiday_json) j) ym WHERE year='2017';
+
+====================================
+get-dellin_counteragents.py > res-counteragents.txt
+psql -h vm-pg -U arc_energo -f copy-dl-counteragents.sql
+
+
+USING:
+1. Обновить справочник контрагентов
+./get-dellin_counteragents.py
+    на выходе файл res-counteragents.txt
+Загрузить в PG:
+psql -h <hostname> -U arc_energo -f sql/copy-dl-counteragents.sql
+в файле sql/copy-dl-counteragents.sql:
+truncate table ext.dl_counteragents_json;
+\copy ext.dl_counteragents_json from res-counteragents.txt;
+
+
+2. Обновить адреса контрагента <CA_ID> с сайта ДЛ, где CA_ID - идентификатор контрагента на dellin.ru
+Например, для ЭТК - 6043235
+  * get-address.py --ca_id=<CA_ID>
+    на выходе файл ca_<CA_ID>_addr.csv
+  в PG:
+  * delete from ext.dl_addresses_json where ca_id=<CA_ID>;
+  * \copy ext.dl_addresses_json from 'ca_<CA_ID>_addr.csv' with (format csv, delimiter '^');
+  * delete from ext.dl_address where ca_id=<CA_ID>; 
+  * insert into ext.dl_addresses (select * from shp.vw_dl_addresses where ca_id=<CA_ID>;
