@@ -30,6 +30,7 @@ class DL_app():
         self.ark_appkey = config['dl_login']['ark_appkey']
         self.user = config['dl_login']['user']
         self.pw = config['dl_login']['pw']
+        self.conn = None
 
 
     def login(self, auth=False):

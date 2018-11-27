@@ -27,7 +27,7 @@ if 200 == app.dl.status_code:
         logging.info('state={}, phoneID={}'.format(
             dl_res['success']['state'],
             ret_phone_id))
-        print(ret_phone_id)
+        print(ret_phone_id, end='', flush=True)
         app.db_login()
         curs = app.conn.cursor()
         loc_sql = curs.mogrify('INSERT INTO ext.dl_addr_phone(addr_id, id, phone, status) VALUES(%s,%s,%s,%s) ON CONFLICT DO NOTHING;', # lastUpdate=now()

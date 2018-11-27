@@ -15,7 +15,7 @@ import sys
 
 1. ?Проверка отсутствия такого контрагента
 2. Если отсутствует, выбор ОПФ из справочника ДЛ
-3. Получение адресных данных из dadata.ru, shp.dl_places, shp.dl_streets
+3. Получение адресных данных из dadata.ru, ext.dl_places, ext.dl_streets
 4. 
 5. 
 """
@@ -56,12 +56,15 @@ conn = psycopg2.connect("host='" + args.pg_srv + "' dbname='arc_energo' user='ar
 
 curs = conn.cursor()
 
-addr_sql = """
+"""
+addr_sql = 
 WITH dd AS (SELECT * FROM dadata_address({}))
 SELECT ret_flg, street_code, ret_addr_house, ret_addr_block, ret_addr_flat FROM dd
-join shp.dl_streets ds ON ds.search_string = dd.ret_addr_street 
-AND ds.city_id IN (SELECT dp.city_id FROM shp.dl_places dp WHERE dp.search_string = dd.ret_addr_city)
+join ext.dl_streets ds ON ds.search_string = dd.ret_addr_street 
+AND ds.city_id IN (SELECT dp.city_id FROM ext.dl_places dp WHERE dp.search_string = dd.ret_addr_city)
 """
+
+addr_sql = "select * from shp.dl_ca_addr_fields({})"
 curs.execute(addr_sql.format(args.code))
 (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block, ret_addr_flat) = curs.fetchone()
 

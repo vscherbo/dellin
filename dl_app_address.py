@@ -25,7 +25,7 @@ if dl_addr.login(auth=True):
             logging.info('state={}, addressID={}'.format(
                 dl_res['success']['state'], ret_addr_id))
             if 'new' == dl_res['success']['state']:
-                print(ret_addr_id)
+                print(ret_addr_id, end='', flush=True)
                 dl_addr.db_login()
                 curs = dl_addr.conn.cursor()
                 loc_sql = curs.mogrify('INSERT INTO ext.dl_addresses(ca_id, id, terminal_id, is_terminal, type, status) VALUES(%s,%s,%s,%s,%s,%s);', # lastUpdate=now()

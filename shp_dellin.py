@@ -38,7 +38,7 @@ class DellinAPI:
         self.sessionID = None
         self.payload = {}
         self.text = ''
-        self.status_code = 0
+        self.status_code = 200
 
         if login and password:
             assert isinstance(login, str)
@@ -74,7 +74,8 @@ class DellinAPI:
         r = None
         try:
             loc_data = json.dumps(self.payload)
-            logging.debug("url={0}, data={1}".format(post_url, re.sub(r'"password": (.*)}', "'*****'",loc_data)))
+            logging.debug("url={}, data={}".format(post_url, 
+                re.sub(r"(.password.:).*}", r"\1 *****", loc_data)))
             r = requests.post(post_url, json=self.payload, headers=self.headers)
             self.status_code = r.status_code
             self.err_msg = None
@@ -151,10 +152,22 @@ class DellinAPI:
         self.payload = self.public_auth()
         return self.dl_post(url)
 
+    def dl_test_request(self, **params):
+        # self.payload = self.customers_auth()
+        logging.debug('params={}'.format(params))
+        self.payload.update(**params)
+
+        # loc_addr = '{{{0}}}'.format(loc_addr)
+        # self.payload.update({"sender": json.loads(loc_addr)})
+
+        return self.payload
+        #return self.dl_post(self.url_request)
+
     def dl_request(self, arc_shipment_id):
         self.payload = self.customers_auth()
         """
         SELECT payload's params from PG by arc_shipment_id
+
         sender_id, receiver_id, proc_date, totalWeight, totalVolume, quantity, maxLength, maxHeight, maxWidth, maxWeight):
         """
         self.payload.update({"form": opf_uid})
