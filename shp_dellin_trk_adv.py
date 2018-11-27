@@ -85,7 +85,7 @@ for (dl_dt, arg_sender, arg_receiver) in rows:
     if tracker_res is None:
         logging.error("dl_tracker_adv res is None")
     elif tracker_res["errormsg"] != "":
-        logging.error("dl_tracker_adv errormsg={0}".format(tracker_res["errormsg"]))
+        logging.error("dl_tracker_adv errormsg={}".format(tracker_res["errormsg"]))
         # OBSOLETE shp_cmd = curs.mogrify(shp_cmd_template, (None, None, 3))  # 3 - статус "ошибка"
         # curs.execute(shp_cmd)
     else:
