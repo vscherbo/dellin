@@ -1,0 +1,15 @@
+- title: Главная
+  url: /
+
+- title: Отслеживание
+  url: /tracking/
+
+- title: Справочники
+  url: /directories/
+
+- title: Предзаказ
+  url: /request/
+
+- title: Разное
+  url: /others/
+
