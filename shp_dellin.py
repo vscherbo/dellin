@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import requests
 import json
 import re
+
+import requests
 
 
 class DellinAPI:
@@ -29,6 +30,7 @@ class DellinAPI:
     url_contacts_update = '{}/v1/customers/book/contacts/update.json'.format(host)  # добавить или обновить контакт по адресу
     url_addresses_update = '{}/v1/customers/book/addresses/update.json'.format(host)  # добавить или обновить адрес контрагента
     url_request = '{}/v1/customers/request.json'.format(host)
+    url_request_v2 = '{}/v2/request.json'.format(host)
     # headers = {'Content-type': 'application/javascript'}
     headers = {'Content-type': 'application/json'}
 
@@ -73,9 +75,9 @@ class DellinAPI:
         ret = None
         r = None
         try:
-            loc_data = json.dumps(self.payload)
-            logging.debug("url={}, data={}".format(post_url, 
-                re.sub(r"(.password.:).*}", r"\1 *****", loc_data)))
+            loc_data = json.dumps(self.payload, ensure_ascii=False)
+            logging.debug("url={}, data={}".format(post_url, re.sub(r"(.password.\s*:\s*)([\'\"].*?[\'\"])(.*?$)" , r"\1 ***** \3" ,loc_data)))
+
             r = requests.post(post_url, json=self.payload, headers=self.headers)
             self.status_code = r.status_code
             self.err_msg = None
@@ -101,10 +103,11 @@ class DellinAPI:
             if self.err_msg:
                 logging.error(self.err_msg)
             if 200 != self.status_code:
-                logging.error("dl_post failed, status_code={}".format(self.status_coder))
+                logging.error("dl_post failed, status_code={}".format(self.status_code))
 
             if r is not None:
                 self.text = r.text
+                # ??? ONLY for req_v2 ret = r.json()
                 # python2 self.text = r.text.encode('utf-8')
 
         return ret
@@ -152,16 +155,34 @@ class DellinAPI:
         self.payload = self.public_auth()
         return self.dl_post(url)
 
-    def dl_test_request(self, **params):
-        # self.payload = self.customers_auth()
-        logging.debug('params={}'.format(params))
-        self.payload.update(**params)
+    def dl_request_v1(self, params):
+        self.payload = params.copy()
+        self.payload.update(self.customers_auth())
+        #data = params.copy()
+        #data.update(self.customers_auth())
+        #logging.info('data={}'.format(data))
 
-        # loc_addr = '{{{0}}}'.format(loc_addr)
-        # self.payload.update({"sender": json.loads(loc_addr)})
+        if self.sessionID:
+            return self.dl_post(self.url_request)
+            # return requests.post(self.url_request, data=json.dumps(data), headers=self.headers).json()
+        else:
+            return self.payload
 
-        return self.payload
-        #return self.dl_post(self.url_request)
+    def dl_test_request(self, params):
+        #for k,v in params.items():
+        #    logging.info('k={}, v={}, dict={}'.format(k, v,  isinstance(v, dict)))
+
+        #self.payload = params.copy()
+        #self.payload.update(self.customers_auth())
+        data = params.copy()
+        data.update(self.customers_auth())
+        logging.info('data={}'.format(data))
+
+        if self.sessionID:
+            # return self.dl_post(self.url_request_v2)
+            return requests.post(self.url_request_v2, data=json.dumps(data), headers=self.headers).json()
+        else:
+            return self.payload
 
     def dl_request(self, arc_shipment_id):
         self.payload = self.customers_auth()
@@ -179,7 +200,8 @@ class DellinAPI:
         if flat:
             loc_addr = '{}, "flat": "{}"'.format(loc_addr, flat)
 
-        loc_addr = '{{{0}}}'.format(loc_addr)
+        # Py2 loc_addr = '{{{0}}}'.format(loc_addr)
+        loc_addr = '{{{}}}'.format(loc_addr)
         self.payload.update({"sender": json.loads(loc_addr)})
 
         return self.dl_post(self.url_request)
@@ -295,3 +317,18 @@ class DellinAPI:
     def dl_logout(self):
         self.payload = self.customers_auth()
         return self.dl_post(self.url_logout)
+
+
+"""
+        def d2j(d):
+            loc_str = ''
+            loc_list = []
+            for k,v in d.items():
+                if isinstance(v, dict):
+                    loc_str = '"{}": "{}"'.format(k, d2j(v))
+                else:
+                    loc_str = '"{}": "{}"'.format(k, v)
+                loc_list.append(loc_str)    
+            loc_str = ','.join(loc_list)
+            return '{{{}}}'.format(loc_str)
+"""
