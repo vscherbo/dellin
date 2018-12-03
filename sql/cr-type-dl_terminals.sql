@@ -2,6 +2,7 @@ drop type shp.t_dl_terminals;
 
 create type shp.t_dl_terminals as (
 "isOffice" bool,
+"isPVZ" bool,
 name varchar(255),
 "fullAddress" varchar(255),
 id integer,
