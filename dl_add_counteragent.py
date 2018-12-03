@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import os
+#import os
 import logging
-import psycopg2
-import argparse
-import configparser
-from shp_dellin import DellinAPI
 import sys
+import dl_app
 
 
 """
@@ -15,54 +12,21 @@ import sys
 
 1. ?Проверка отсутствия такого контрагента
 2. Если отсутствует, выбор ОПФ из справочника ДЛ
-3. Получение адресных данных из dadata.ru, ext.dl_places, ext.dl_streets
-4. 
-5. 
+3. Получение адресных данных из функции shp.dl_ca_addr_fields ( dadata.ru, ext.dl_places, ext.dl_streets)
+4. Добавление контрагента в справочник ДЛ 
+5. Добавление в таблицу dl_counteragents со статусом 1 
 """
 
-log_format = '[%(filename)-21s:%(lineno)4s - %(funcName)20s()] %(levelname)-7s | %(asctime)-15s | %(message)s'
+dl_app.parser.add_argument('--code', type=int, required=True, help='arc_energo.Предприятия.Код')
+args = dl_app.parser.parse_args()
 
-(prg_name, prg_ext) = os.path.splitext(os.path.basename(__file__))
-conf_file_name = "dl.conf"
+app = dl_app.DL_app(args=args, description='DL contact add')
+logging.info("args={}".format(args))
 
-parser = argparse.ArgumentParser(description='add counteragent to address book of Dellin')
-parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
-parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
-parser.add_argument('--code', type=int, help='arc_energo.Предприятия.Код')
-parser.add_argument('--log_to_file', type=str, default='stdout', help='log destination')
-parser.add_argument('--log_level', type=str, default="DEBUG", help='log level')
-args = parser.parse_args()
+app.login(auth=True)
+app.db_login()
 
-numeric_level = getattr(logging, args.log_level, None)
-if not isinstance(numeric_level, int):
-    raise ValueError('Invalid log level: %s' % numeric_level)
-
-if 'stdout' == args.log_to_file:
-    logging.basicConfig(stream=sys.stdout, format=log_format, level=numeric_level)
-else:
-    logging.basicConfig(filename=args.log_to_file, format=log_format, level=numeric_level)
-
-
-config = configparser.ConfigParser(allow_no_value=True)
-config.read(args.conf)
-API_KEY = config['dadata_login']['API_KEY']
-
-ark_appkey = config['dl_login']['ark_appkey']
-user = config['dl_login']['user']
-pw = config['dl_login']['pw']
-
-conn = psycopg2.connect("host='" + args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
-# TODO check return code
-
-curs = conn.cursor()
-
-"""
-addr_sql = 
-WITH dd AS (SELECT * FROM dadata_address({}))
-SELECT ret_flg, street_code, ret_addr_house, ret_addr_block, ret_addr_flat FROM dd
-join ext.dl_streets ds ON ds.search_string = dd.ret_addr_street 
-AND ds.city_id IN (SELECT dp.city_id FROM ext.dl_places dp WHERE dp.search_string = dd.ret_addr_city)
-"""
+curs = app.conn.cursor()
 
 addr_sql = "select * from shp.dl_ca_addr_fields({})"
 curs.execute(addr_sql.format(args.code))
@@ -79,19 +43,41 @@ if ret_flag:
     curs.execute(sql_ent)
     (opf, name, inn) = curs.fetchone()
 
-    dl = DellinAPI(ark_appkey, user, pw)
-    logging.info("logged in sess_id={0}".format(dl.sessionID))
 
-    logging.info('dl.dl_book_counteragents_update(opf={}, name={}, inn={}, kladr_street={}, house={}, building={}, structure={}, flat={});' \
+    logging.info('app.l_book_counteragents_update(opf={}, name={}, inn={}, kladr_street={}, house={}, building={}, structure={}, flat={});' \
             .format(opf, name, inn, ret_addr_kladr_street, ret_addr_house, ret_addr_block, None, ret_addr_flat))
-    res = dl.dl_book_counteragents_update(opf, name, inn,
+    dl_res = app.dl.dl_book_counteragents_update(opf, name, inn,
             street_kladr=ret_addr_kladr_street, 
             house = ret_addr_house, 
             building = ret_addr_block, 
             structure=None,
             flat = ret_addr_flat)
-    logging.info('dl_book_counteragents_update res={}'.format(res))
-else:
-    logging.error('dadata_address returns False')
+    logging.info('dl_book_counteragents_update res={}'.format(dl_res))
 
-dl.dl_logout()
+# dl_book_counteragents_update res={'success': {'counteragentID': 7990973, 'juridicalAddressID': 24196643, 'state': 'new'}}
+
+    if 200 == app.dl.status_code:
+        if 'success' in dl_res:
+            ret_ca_id = dl_res['success']['counteragentID']
+            logging.info('state={}, counteragentID={}'.format(dl_res['success']['state'], ret_ca_id))
+            print(ret_ca_id, end='', flush=True)
+            loc_sql = curs.mogrify(u'INSERT INTO ext.dl_counteragents(id, inn, status) VALUES(%s,%s,%s) ON CONFLICT DO NOTHING;', # lastUpdate=now()
+                (ret_ca_id, inn, 1 ))
+            logging.info(u"loc_sql={}".format(loc_sql))
+            curs.execute(loc_sql)
+            app.conn.commit()
+        else:
+            err_str = 'ERROR={}'.format(dl_res)
+            logging.error(err_str)
+            print(err_str, file=sys.stderr, end='', flush=True)
+    else:
+        err_str = 'ERROR={}'.format(app.dl.err_msg)
+        logging.error(err_str)
+        print(err_str, file=sys.stderr, end='', flush=True)
+
+else:
+    err_str = 'dadata_address returns False'
+    logging.error(err_str)
+    print(err_str, file=sys.stderr, end='', flush=True)
+
+app.logout()
