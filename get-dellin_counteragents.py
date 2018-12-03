@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+print('OBSOLETE !!!!')
+print('see get-dl-ca.py')
+sys.exit(123)
 import logging
 import os
-import sys
 import argparse
 import configparser
 

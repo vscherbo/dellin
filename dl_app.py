@@ -61,6 +61,6 @@ class DL_app():
 conf_file_name = "dl.conf"
 parser = argparse.ArgumentParser()
 parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
-parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
+parser.add_argument('--pg_srv', type=str, default='localhost', help='PG hostname')
 parser.add_argument('--log_file', type=str, default='stdout', help='log destination')
 parser.add_argument('--log_level', type=str, default="DEBUG", help='log level')
