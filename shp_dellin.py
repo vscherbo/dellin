@@ -68,7 +68,7 @@ class DellinAPI(object):
     def customers_auth(self):
         return {
             'appKey': self.app_key,
-            'session_id': self.session_id,
+            'sessionID': self.session_id,
         }
 
     @staticmethod
