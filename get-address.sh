@@ -2,11 +2,11 @@
 
 . /usr/local/bin/bashlib
 
-[ +$1 == + ] && { echo 1st parameter ca_id is required. Exit; exit 123; }
+[ +"$1" -eq + ] && { echo 1st parameter ca_id is required. Exit; exit 123; }
 # TODO
 # check $1 for digits
 
-LOG=`namename $0`-${1}.log
+LOG=$(namename $0)-${1}.log
 
 ./get-address.py --ca_id $1 --log_level=INFO --log_to_file=$LOG
 
