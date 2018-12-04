@@ -1,0 +1,9 @@
+--  psql -v ADDR_ID=12345
+-- \copy shp.dl_addr_contacts_json(addr_id, jb) from 'addr.csv' with (format csv, delimiter '^');
+delete from ext.dl_addr_contacts_json where addr_id=:ADDR_ID;
+\copy ext.dl_addr_contacts_json from :csv with (format csv, delimiter '^');
+
+delete from ext.dl_addr_contact where addr_id=:ADDR_ID; 
+insert into ext.dl_addr_contact (select *,0 from shp.vw_dl_addr_contact where addr_id=:ADDR_ID);
+delete from ext.dl_addr_phone where addr_id=:ADDR_ID; 
+insert into ext.dl_addr_phone (select *,0 from shp.vw_dl_addr_phone where addr_id=:ADDR_ID);
