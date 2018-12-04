@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+"""
+Base class for api.dellin.ru
+"""
 import logging
 import json
 import re
@@ -8,7 +10,10 @@ import re
 import requests
 
 
-class DellinAPI:
+class DellinAPI(object):
+    """
+    Base class for api.dellin.ru
+    """
     host = "https://api.dellin.ru"
     url_login = '{}/v1/customers/login.json'.format(host)
     url_sfrequest = '{}/v1/customers/sfrequest.json'.format(host)
@@ -37,7 +42,7 @@ class DellinAPI:
     def __init__(self, app_key, login=None, password=None):
         logging.getLogger(__name__).addHandler(logging.NullHandler())
         self.app_key = app_key
-        self.sessionID = None
+        self.session_id = None
         self.payload = {}
         self.text = ''
         self.status_code = 200
@@ -51,9 +56,9 @@ class DellinAPI:
         self.payload = {'login': login,
                         'password': password}
         self.payload.update(self.public_auth())
-        r = self.dl_post(self.url_login)
-        if r is not None:
-            self.sessionID = r['sessionID']
+        resp = self.dl_post(self.url_login)
+        if resp is not None:
+            self.session_id = resp['sessionID']
 
     def public_auth(self):
         return {
@@ -63,7 +68,7 @@ class DellinAPI:
     def customers_auth(self):
         return {
             'appKey': self.app_key,
-            'sessionID': self.sessionID,
+            'session_id': self.session_id,
         }
 
     @staticmethod
@@ -73,18 +78,18 @@ class DellinAPI:
     def dl_post(self, post_url):
         self.payload['appKey'] = self.app_key
         ret = None
-        r = None
+        resp = None
         try:
             loc_data = json.dumps(self.payload, ensure_ascii=False)
-            logging.debug("url={}, data={}".format(post_url, re.sub(r"(.password.\s*:\s*)([\'\"].*?[\'\"])(.*?$)" , r"\1 ***** \3" ,loc_data)))
+            logging.debug("url={}, data={}".format(post_url, re.sub(r"(.password.\s*:\s*)([\'\"].*?[\'\"])(.*?$)", r"\1 ***** \3", loc_data)))
 
-            r = requests.post(post_url, json=self.payload, headers=self.headers)
-            self.status_code = r.status_code
+            resp = requests.post(post_url, json=self.payload, headers=self.headers)
+            self.status_code = resp.status_code
             self.err_msg = None
-            logging.debug("status_code={}".format(r.status_code))
-            # logging.debug("r.headers={}".format(r.headers))
-            # logging.debug("r.url={}".format(r.url))
-            r.raise_for_status()
+            logging.debug("status_code={}".format(resp.status_code))
+            # logging.debug("resp.headers={}".format(resp.headers))
+            # logging.debug("resp.url={}".format(resp.url))
+            resp.raise_for_status()
         except requests.exceptions.Timeout as e:
             # Maybe set up for a retry, or continue in a retry loop
             self.err_msg = self.__exception_fmt__('Timeout', e)
@@ -97,7 +102,7 @@ class DellinAPI:
             # catastrophic error. bail.
             self.err_msg = self.__exception_fmt__('RequestException', e)
         else:
-            ret = r.json()
+            ret = resp.json()
             # logging.debug("r.text={}".format(r.text))
         finally:
             if self.err_msg:
@@ -105,10 +110,10 @@ class DellinAPI:
             if 200 != self.status_code:
                 logging.error("dl_post failed, status_code={}".format(self.status_code))
 
-            if r is not None:
-                self.text = r.text
-                # ??? ONLY for req_v2 ret = r.json()
-                # python2 self.text = r.text.encode('utf-8')
+            if resp is not None:
+                self.text = resp.text
+                # ??? ONLY for req_v2 ret = resp.json()
+                # python2 self.text = resp.text.encode('utf-8')
 
         return ret
 
@@ -129,7 +134,7 @@ class DellinAPI:
         self.payload = self.customers_auth()
         return self.dl_post(self.url_book_counteragents)
 
-    def dl_counteragents(self, full_info = False):
+    def dl_counteragents(self, full_info=False):
         self.payload = self.customers_auth()
         if full_info:
             self.payload["full_info"] = str(full_info)
@@ -162,7 +167,7 @@ class DellinAPI:
         #data.update(self.customers_auth())
         #logging.info('data={}'.format(data))
 
-        if self.sessionID:
+        if self.session_id:
             return self.dl_post(self.url_request)
             # return requests.post(self.url_request, data=json.dumps(data), headers=self.headers).json()
         else:
@@ -178,7 +183,7 @@ class DellinAPI:
         data.update(self.customers_auth())
         logging.info('data={}'.format(data))
 
-        if self.sessionID:
+        if self.session_id:
             # return self.dl_post(self.url_request_v2)
             return requests.post(self.url_request_v2, data=json.dumps(data), headers=self.headers).json()
         else:
@@ -191,19 +196,6 @@ class DellinAPI:
 
         sender_id, receiver_id, proc_date, totalWeight, totalVolume, quantity, maxLength, maxHeight, maxWidth, maxWeight):
         """
-        self.payload.update({"form": opf_uid})
-        self.payload.update({"name": name})
-        if building:
-            loc_addr = '{}, "building": "{}"'.format(loc_addr, building)
-        if structure:
-            loc_addr = '{}, "structure": "{}"'.format(loc_addr, structure)
-        if flat:
-            loc_addr = '{}, "flat": "{}"'.format(loc_addr, flat)
-
-        # Py2 loc_addr = '{{{0}}}'.format(loc_addr)
-        loc_addr = '{{{}}}'.format(loc_addr)
-        self.payload.update({"sender": json.loads(loc_addr)})
-
         return self.dl_post(self.url_request)
 
     def dl_countries(self):
@@ -281,10 +273,10 @@ class DellinAPI:
             self.payload.update({"flat": flat})
         return self.dl_post(self.url_addresses_update)
 
-    def dl_address_update(self, addr_id, street_kladr=None, house=None, building=None, structure=None, flat=None): 
+    def dl_address_update(self, addr_id, street_kladr=None, house=None, building=None, structure=None, flat=None):
         if street_kladr is None and house is None and building is None and structure is None and flat is None:
             logging.warning('Nothing to update, all arguments are None')
-            return json(None)
+            return None
 
         self.payload = self.customers_auth()
         self.payload.update({"addressID": addr_id})
