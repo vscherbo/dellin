@@ -104,7 +104,7 @@ def main():
     #logging.info('dl_res={}'.format(dl_res))
     print(json.dumps(dl_res, ensure_ascii=False, indent=4))
 
-    if app.dl.sessionID:
+    if app.dl.session_id:
         app.logout()
 
 if __name__ == '__main__':

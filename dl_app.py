@@ -40,7 +40,7 @@ class DL_app():
             self.dl = DellinAPI(self.ark_appkey)
         loc_return = (200 == self.dl.status_code)
         if loc_return:
-            logging.info("logged in sess_id={0}".format(self.dl.sessionID))
+            logging.info("logged in sess_id={0}".format(self.dl.session_id))
         else:
             logging.error("loggin error. status_code={0}".format(self.dl.status_code))
         return loc_return

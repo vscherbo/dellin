@@ -2,22 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+from datetime import datetime
 import logging
-import psycopg2
 import argparse
 import time
 import configparser
+
+import psycopg2
+
 from shp_dellin import DellinAPI
-import sys
-from datetime import datetime
 
 
-def valid_date(s):
+def valid_date(date_str):
     try:
-        datetime.strptime(s, "%Y-%m-%d")
-        return s
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return date_str
     except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
+        msg = "Not a valid date: '{0}'.".format(date_str)
         raise argparse.ArgumentTypeError(msg)
 
 
@@ -63,7 +65,7 @@ pw = config['dl_login']['pw']
 logging.debug("SELECT * FROM shp_dl_tn_query('{}');".format(args.start_date))
 
 dl = DellinAPI(ark_appkey, user, pw)
-logging.info("logged in sess_id={0}".format(dl.sessionID))
+logging.info("logged in sess_id={0}".format(dl.session_id))
 
 # args.!!!  pg_srv = 'vm-pg.arc.world'
 conn = psycopg2.connect("host='" + args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass

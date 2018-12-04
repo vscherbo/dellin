@@ -42,7 +42,7 @@ user = config['dl_login']['user']
 pw = config['dl_login']['pw']
 
 dl = DellinAPI(ark_appkey, user, pw)
-logging.info("logged in sess_id={0}".format(dl.sessionID))
+logging.info("logged in sess_id={0}".format(dl.session_id))
 
 
 counteragents_res = dl.dl_book_counteragents()
