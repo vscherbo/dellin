@@ -2,7 +2,7 @@
 
 last_ca=$(
 psql -At -U arc_energo <<EOT
-SELECT ca.id FROM shp.vw_dl_counteragents ca WHERE ca."lastUpdate" > '2018-11-01 08:10:05.000'
+SELECT ca_id FROM ext.dl_addresses a WHERE a.status <> 0                          
 EOT
 )
 

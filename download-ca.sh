@@ -1,12 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 . /usr/local/bin/bashlib
 
 WRKDIR=/opt/dellin
 cd $WRKDIR
-LOG=`namename $0`.log
+LOG=$(namename "$0").log
 
-exec 1>$LOG 2>&1
+exec 1>"$LOG" 2>&1
 # Обновить справочник контрагентов
 #    на выходе файл res-counteragents.txt
 ./get-dl-ca.py --log_level=INFO
