@@ -4,6 +4,7 @@
 Test DL request v1
 """
 
+import datetime
 import logging
 import json
 # from datetime import date
@@ -19,14 +20,14 @@ def main():
     args = dl_app.parser.parse_args()
 
     app = dl_app.DL_app(args=args, description='DL req test')
-    logging.info("args={}".format(args))
+    logging.info("args=%s", args)
 
     # --------------------------------------------
-    # Request.Members.Sender
+    # Sender
     sender_id = 6619266  # TODO set
     sender_address_id = 24109121  # TODO set
-    sender_contact_id = [84292152]  # TODO set
-    sender_phone_id = [90166933]  # TODO set
+    sender_contact_id = [87652393]  # TODO set
+    sender_phone_id = [92944190]  # TODO set
     sender = collections.OrderedDict()
     sender["counteragentID"] = sender_id
     sender["addressID"] = sender_address_id
@@ -35,7 +36,7 @@ def main():
     sender["worktimeStart"] = "00:00"
     sender["worktimeEnd"] = "23:59"
 
-    # Request.Members.Receiver
+    # Receiver
     receiver_id = 573899  # TODO set
     receiver_address_id = 24136692  # TODO set
     receiver_contact_id = [84253436]  # TODO set
@@ -47,34 +48,24 @@ def main():
     receiver["phones"] = receiver_phone_id
     receiver["worktimeStart"] = "00:00"
     receiver["worktimeEnd"] = "23:59"
-    """
-    receiver = {
-            "counteragentID" : receiver_id,
-            "addressID": receiver_address_id,
-            "contacts": receiver_contact_id,
-            "phones": receiver_phone_id,
-            "worktimeStart": "00:00",
-            "worktimeEnd": "23:59"
-            }
-    """
 
     # --------------------------------------------
     # TODO set
-    cargo_length = 1
-    cargo_width = 1
-    cargo_height = 1
+    cargo_length = 0.01
+    cargo_width = 0.01
+    cargo_height = 0.01
     cargo_weight = 1
-    cargo_total_volume = 2
+    cargo_total_volume = 0.001
     cargo_total_weight = 1
 
     # Request
-    production_mode = False
+    tomorrow_date = datetime.date.today() + datetime.timedelta(days=1)
     request = collections.OrderedDict()
     request["sender"] = sender
     request["receiver"] = receiver
-    request["day"] = 11
-    request["month"] = 12
-    request["year"] = 2018
+    request["day"] = tomorrow_date.day
+    request["month"] = tomorrow_date.month
+    request["year"] = tomorrow_date.year
     request["totalWeight"] = cargo_total_weight
     request["totalVolume"] = cargo_total_volume
     request["quantity"] = 1
@@ -82,18 +73,13 @@ def main():
     request["maxWidth"] = cargo_width
     request["maxHeight"] = cargo_height
     request["maxWeight"] = cargo_weight
-    #request["statedValue"] = 0
-    #request["loadingType"] = 1
+    request["statedValue"] = 0.0
     request["whoIsPayer"] = 2
     request["primaryPayer"] = 2
     request["paymentType"] = 1
-    request["name"] = "devices"
-    #request["document"] = "document"
     request["deliveryType"] = 6
-    #request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
+    request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
     request["inOrder"] = 0
-    #request["name"] = "Приборы"
-    #request["document"] = "доверенность"
 
     loc_auth = True
 
