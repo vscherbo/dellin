@@ -13,5 +13,5 @@ TRUNCATE TABLE ext.dl_counteragents_json;
 -- truncate 'daily' table
 TRUNCATE TABLE ext.dl_counteragents;
 -- insert fresh data into 'daily' table
-INSERT INTO  ext.dl_counteragents (SELECT * FROM shp.vw_dl_counteragents);
+INSERT INTO  ext.dl_counteragents (SELECT * FROM shp.vw_dl_counteragents) ON CONFLICT DO NOTHING;
 
