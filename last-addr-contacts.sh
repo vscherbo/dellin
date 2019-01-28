@@ -1,5 +1,11 @@
 #!/bin/sh
 
+. /usr/local/bin/bashlib                                                         
+
+cd "$(dirname "$0")"                                                             
+LOG=$(namename "$0").log
+exec 1>"$LOG" 2>&1
+
 last_a=$(
 psql -At -U arc_energo <<EOT
 SELECT id FROM ext.dl_addr_contact WHERE status <> 0
@@ -11,7 +17,7 @@ EOT
 
 for a in $last_a
 do
-    echo 'Ask contacts for addr='"$a"
+    logmsg INFO 'Ask contacts for addr='"$a"
     ./get-book-address.sh "$a"
     sleep 2
 done
