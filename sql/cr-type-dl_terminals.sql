@@ -11,5 +11,6 @@ address varchar(255),
 "maxHeight" numeric(9,2),
 "maxLength" numeric(9,2),
 "maxVolume" numeric(9,2),
-"maxWidth" numeric(9,2)
+"maxWidth" numeric(9,2),
+"default" bool
 );
