@@ -8,9 +8,9 @@ exec 1>"$LOG" 2>&1
 
 last_a=$(
 psql -At -U arc_energo <<EOT
-SELECT id FROM ext.dl_addr_contact WHERE status <> 0
+SELECT addr_id FROM ext.dl_addr_contact WHERE status <> 0
 UNION
-SELECT id FROM ext.dl_addr_phone WHERE status <> 0
+SELECT addr_id FROM ext.dl_addr_phone WHERE status <> 0
 EOT
 )
 # AND ( contacts <> 0 OR phones <> 0 )
