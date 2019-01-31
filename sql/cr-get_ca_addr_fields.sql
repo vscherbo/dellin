@@ -17,7 +17,7 @@ begin
     into ret_flg, ret_addr_city, ret_addr_street, ret_addr_house, ret_addr_block, ret_addr_flat ;
 
     SELECT street_code into ret_street_code FROM ext.dl_streets ds 
-    where ds.search_string = ret_addr_street
+    where ds.search_string = replace(ret_addr_street, 'ё', 'е')
     AND ds.city_id IN (SELECT dp.city_id FROM ext.dl_places dp WHERE dp.search_string = ret_addr_city);
 
     RAISE NOTICE 'ret_flg=%, ret_street_code=%, ret_addr_house=%, ret_addr_block=%, ret_addr_flat=%', 
