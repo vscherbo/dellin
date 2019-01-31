@@ -1,5 +1,5 @@
-CREATE OR REPLACE FUNCTION shp.dl_add_addr_phone(
-    arg_addr_id integer -- shp.vw_dl_addresses.id
+CREATE OR REPLACE FUNCTION shp.dl_upd_addr_phone(
+    arg_phone_id integer
     , arg_phone character varying -- single phone number with length >=10
     , arg_add_num character varying(5) DEFAULT NULL -- single phone number with length <=5
     )
@@ -11,21 +11,21 @@ DECLARE cmd character varying;
   err_str VARCHAR := '';
   wrk_dir text := '/opt/dellin';
 BEGIN
-    cmd := format('python3 %s/dl_app_phone.py --pg_srv=localhost --log_file=%s/dl_add_addr_phone.log --conf=%s --addr_id=%s --phone=''%s''', 
+    cmd := format('python3 %s/dl_app_phone_update.py --pg_srv=localhost --log_file=%s/dl_app_phone_update.log --conf=%s --phone_id=%s --phone=''%s''', 
         wrk_dir, -- script dir
         wrk_dir, -- logfile dir
         format('%s/dl.conf', wrk_dir), -- conf file
-        arg_addr_id,
+        arg_phone_id,
         arg_phone);
-
-    IF arg_add_num IS NOT NULL                                                   
-    THEN                                                                         
-        cmd := format('%s --add_num=''%s''', cmd, arg_add_num );                 
-    END IF;                                                                      
+    
+    IF arg_add_num IS NOT NULL
+    THEN
+        cmd := format('%s --add_num=''%s''', cmd, arg_add_num );
+    END IF;
 
     IF cmd IS NULL 
     THEN 
-       err_str := 'dl_add_addr_phone cmd IS NULL';
+       err_str := 'dl_upd_addr_phone cmd IS NULL';
        RAISE '%', err_str ; 
     END IF;
 
@@ -33,7 +33,7 @@ BEGIN
     
     IF err_str IS NOT NULL
     THEN 
-       RAISE 'dl_add_addr_phone cmd=%^err_str=[%]', cmd, err_str; 
+       RAISE 'dl_upd_addr_phone cmd=%^err_str=[%]', cmd, err_str; 
     END IF;
     
     return ret_str;
