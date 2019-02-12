@@ -7,7 +7,7 @@
 WRKDIR=`dirname $0`
 cd $WRKDIR
 LOG=$(namename $0).log
-exec 1>$LOG 2>&1
+exec 1>>$LOG 2>&1
 
 [ +$1 == + ] && { logmsg ERROR '1st parameter - dellin url is required!'; exit 123; }
 
