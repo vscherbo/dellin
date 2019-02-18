@@ -10,10 +10,10 @@ create type shp.dl_counteragent as (
 "form" varchar,
 "type" varchar,
 "inn" varchar,
-"addresses" integer,
+"document" json,
 "Email" varchar,
 "Phone" varchar,
-"document" json
+"addresses" integer
 );
 
 create view shp.vw_dl_counteragents as
