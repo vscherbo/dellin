@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION shp.dl_request_v1(arg_shp_id integer)
+CREATE OR REPLACE FUNCTION shp.dl_request_v1(arg_shp_id integer, arg_test boolean DEFAULT 'f')
   RETURNS character varying
 AS
 $BODY$
@@ -12,6 +12,10 @@ BEGIN
         wrk_dir, -- logfile dir
         format('%s/dl.conf', wrk_dir), -- conf file
         arg_shp_id);
+
+    IF arg_test THEN
+        cmd := format('%s --test=True', cmd);
+    END IF;
 
     IF cmd IS NULL 
     THEN 
