@@ -16,7 +16,10 @@ def main():
     """
     Just main proc
     """
-    dl_app.parser.add_argument('--shp_id', type=int, required=True, help='shp_id')
+    dl_app.parser.add_argument('--shp_id', type=int, required=True,
+                               help='shp_id')
+    dl_app.parser.add_argument('--test', type=bool, required=False,
+                               default=False, help='test mode')
     args = dl_app.parser.parse_args()
 
     app = dl_app.DL_app(args=args, description='DL request v1')
@@ -27,7 +30,6 @@ def main():
     curs = app.conn.cursor()
     shp_id = args.shp_id
     logging.info("shp_id=%d", shp_id)
-    # curs.execute("SELECT pre_shipdate FROM shp.dl_preorder_params(%s);", (shp_id,))
     curs.callproc('shp.dl_req_params', [shp_id])
     (sender_id, sender_address_id, receiver_id, receiver_address_id, boxes,
      pre_shipdate) = curs.fetchone()
@@ -75,7 +77,6 @@ def main():
     cargo_total_weight = 1
 
     # Request
-    # debug only pre_shipdate = datetime.date.today() + datetime.timedelta(days=1)
     request = collections.OrderedDict()
     request["sender"] = sender
     request["receiver"] = receiver
@@ -95,7 +96,10 @@ def main():
     request["paymentType"] = 1
     request["deliveryType"] = 1
     request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
-    request["inOrder"] = 0
+    if args.test:
+        request["inOrder"] = 0
+    else:
+        request["inOrder"] = 1
 
     loc_auth = True
 
@@ -103,28 +107,31 @@ def main():
 
     dl_res = app.dl.dl_request_v1(request)
     logging.info('dl.text=%s', app.dl.text)
-    #logging.info('dl_res={}'.format(dl_res))
+    # logging.info('dl_res={}'.format(dl_res))
     logging.info(json.dumps(dl_res, ensure_ascii=False, indent=4))
-    now = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.strftime(datetime.datetime.now(),
+                                     '%Y-%m-%d %H:%M:%S')
     dl_answer = dl_res["answer"]
     if dl_answer["state"] == 'success':
         upd_sql = curs.mogrify(u"""
-        UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s, ret_msg=NULL, req_id=%s, req_barcode=%s 
-        WHERE shp_id=%s;""", (1, now, app.dl.status_code, dl_answer["requestID"],
-                              dl_answer["barcode"], shp_id))
+UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
+ret_msg=NULL, req_id=%s, req_barcode=%s
+WHERE shp_id=%s;""", (1, now, app.dl.status_code, dl_answer["requestID"],
+                      dl_answer["barcode"], shp_id))
     else:
         upd_sql = curs.mogrify(u"""
-        UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s, ret_msg=%s
-        WHERE shp_id=%s;""", (9, now, app.dl.status_code,
-                              json.dumps(dl_answer, ensure_ascii=False), shp_id))
+UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
+ret_msg=%s
+WHERE shp_id=%s;""", (9, now, app.dl.status_code,
+                      json.dumps(dl_answer, ensure_ascii=False), shp_id))
 
     logging.info(u"upd_sql=%s", upd_sql)
     curs.execute(upd_sql)
     app.conn.commit()
 
-
     if app.dl.session_id:
         app.logout()
+
 
 if __name__ == '__main__':
     main()
