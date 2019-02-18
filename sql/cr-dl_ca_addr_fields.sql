@@ -1,5 +1,7 @@
-drop function shp.dl_ca_addr_fields(integer);
+-- drop function shp.dl_ca_addr_fields(integer);
+drop function shp.dl_ca_addr_fields(integer, varchar);
 CREATE OR REPLACE FUNCTION shp.dl_ca_addr_fields(arg_code integer,
+    arg_addr_text varchar DEFAULT NULL,
 out ret_flg boolean,
 out ret_street_code varchar,
 out ret_addr_house varchar,
@@ -13,7 +15,7 @@ declare
 ret_addr_city varchar;
 ret_addr_street varchar;
 begin
-    SELECT * FROM dadata_address(arg_code)
+    SELECT * FROM dadata_address(arg_code, arg_addr_text)
     into ret_flg, ret_addr_city, ret_addr_street, ret_addr_house, ret_addr_block, ret_addr_flat ;
 
     SELECT street_code into ret_street_code FROM ext.dl_streets ds 

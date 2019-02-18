@@ -3,7 +3,8 @@
 -- DROP FUNCTION shp.dl_add_counteragent(integer);
 
 CREATE OR REPLACE FUNCTION shp.dl_add_counteragent(
-    arg_code integer -- Предприятия.Код
+    arg_code integer, -- Предприятия.Код
+    arg_addr varchar DEFAULT NULL
     )
   RETURNS character varying AS
 $BODY$
@@ -18,6 +19,11 @@ BEGIN
         format('%s/dl.conf', wrk_dir), -- conf file
         arg_code);
     -- --conf= ... --log_level=INFO
+
+    IF arg_addr IS NOT NULL THEN
+        cmd := format('%s --address=''%s''', cmd, arg_addr);
+    END IF;
+
     IF cmd IS NULL 
     THEN 
        ret_str := 'dl_add_counteragent cmd IS NULL';
