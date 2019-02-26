@@ -13,13 +13,14 @@ loc_result TEXT;
 loc_status integer := -9;
 loc_func_name text := 'dl_trnum_update';
 begin
-    for dl_tr in (select shp_id, shipment_dt, tracking_code, dl_tracking_id
+    for dl_tr in (select shp_id, shipment_dt, tracking_code, dl_tracking_id, doc_date
                   from shp.vs_dl_tracking
                   where status = 0
                   order by tracking_code) 
     loop                
         begin
-            update shp.shipments s set (carr_doc, carr_docdt) = (dl_tr.tracking_code, dl_tr.shipment_dt)
+            -- update shp.shipments s set (carr_doc, carr_docdt) = (dl_tr.tracking_code, dl_tr.shipment_dt)
+            update shp.shipments s set (carr_doc, carr_docdt) = (dl_tr.tracking_code, dl_tr.doc_date)
             where dl_tr.shp_id = s.shp_id;
             update "Счета" b set ("КодТК", "ДокТК", "ДокТКДата", "Отгружен") = (6, dl_tr.tracking_code, dl_tr.shipment_dt, true)
                 where b."№ счета" in (SELECT sb.bill FROM shp.ship_bills sb WHERE sb.shp_id = dl_tr.shp_id);
