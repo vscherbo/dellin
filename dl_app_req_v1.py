@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 """
-Test DL request v1
+DL pre-request v1
 """
 
 import datetime
@@ -32,7 +32,13 @@ def main():
     logging.info("shp_id=%d", shp_id)
     curs.callproc('shp.dl_req_params', [shp_id])
     (sender_id, sender_address_id, receiver_id, receiver_address_id, boxes,
-     pre_shipdate) = curs.fetchone()
+     wepay, pre_shipdate) = curs.fetchone()
+    assert sender_id is not None, 'sender_id не определён'
+    assert sender_address_id is not None, 'sender_address_id не определён'
+    assert receiver_id is not None, 'receiver_id не определён'
+    assert receiver_address_id is not None, 'receiver_address_id не определён'
+    assert boxes is not None, 'boxes не определён'
+    assert wepay is not None, 'wepay не определён'
 
     curs.callproc('shp.dl_req_sender_contacts', [shp_id])
     sender_contact_ids = [r[0] for r in curs.fetchall()]
@@ -91,15 +97,22 @@ def main():
     request["maxHeight"] = cargo_height
     request["maxWeight"] = cargo_weight
     request["statedValue"] = 0.0
-    request["whoIsPayer"] = 2
-    request["primaryPayer"] = 2
+    # 1 - отправитель, 2 -получатель
+    if wepay:
+        loc_payer = 1
+    else:
+        loc_payer = 2
+    request["whoIsPayer"] = loc_payer
+    request["primaryPayer"] = loc_payer
     request["paymentType"] = 1
     request["deliveryType"] = 1
     request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
     if args.test:
         request["inOrder"] = 0
+        loc_status = 2
     else:
         request["inOrder"] = 1
+        loc_status = 1
 
     loc_auth = True
 
@@ -116,8 +129,10 @@ def main():
         upd_sql = curs.mogrify(u"""
 UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
 ret_msg=NULL, req_id=%s, req_barcode=%s
-WHERE shp_id=%s;""", (1, now, app.dl.status_code, dl_answer["requestID"],
+WHERE shp_id=%s;""", (loc_status, now, app.dl.status_code, dl_answer["requestID"],
                       dl_answer["barcode"], shp_id))
+        print('{}@{}'.format(dl_answer["requestID"],
+                             dl_answer["barcode"]), end='', flush=True)
     else:
         upd_sql = curs.mogrify(u"""
 UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
