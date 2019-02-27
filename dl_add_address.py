@@ -43,7 +43,8 @@ def main():
     addr_sql = "select * from shp.dl_ca_addr_fields({}, '{}')"
     curs.execute(addr_sql.format(-1, args.address))
     (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block,
-     ret_addr_flat, ret_street) = curs.fetchone()
+     ret_addr_flat, ret_street, ret_street_type,
+     ret_addr_city_code) = curs.fetchone()
 
     if ret_flag:
         logging.info('app.dl_address_add(ca_id={}, kladr_street={}, street={},\
@@ -51,28 +52,31 @@ def main():
                                           ret_street, ret_addr_house,
                                           ret_addr_block, ret_addr_flat))
 
-        # if OK loc_status = 1
-        loc_status = bool(ret_addr_kladr_street and ret_addr_house)
 
         # do not call dellin api
-        if not loc_status:
+        if not ret_addr_house:
             err_params = []
-            if ret_addr_kladr_street is None:
-                err_params.append('{} (улица: {})'.format(
-                    ERR_REASON['street_kladr'],
-                    ret_street))
             if ret_addr_house is None:
                 err_params.append(ERR_REASON['house'])
             print(ca_params_error(err_params), file=sys.stderr, end='',
                   flush=True)
             return
 
-        dl_res = app.dl.dl_address_add(ca_id=args.ca_id,
-                                       street_kladr=ret_addr_kladr_street,
-                                       house=ret_addr_house,
-                                       building=ret_addr_block,
-                                       structure=None,
-                                       flat=ret_addr_flat)
+        params = {}
+        params["counteragentID"] = args.ca_id
+        params["house"] = ret_addr_house
+        params["building"] = ret_addr_block
+        params["structure"] = None
+        params["flat"] = ret_addr_flat
+        if ret_addr_kladr_street:
+            params["street"] = ret_addr_kladr_street
+        else:
+            custom_street = {}
+            custom_street["code"] = ret_addr_city_code.ljust(25, '0')
+            custom_street["street"] = ret_street_type
+            params["customStreet"] = custom_street
+
+        dl_res = app.dl.dl_any_address_add(params)
 
         logging.info('dl_address_add res=%s', dl_res)
 

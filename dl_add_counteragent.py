@@ -59,7 +59,7 @@ def main():
         addr_sql = "select * from shp.dl_ca_addr_fields({})"
         curs.execute(addr_sql.format(args.code))
     (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block,
-     ret_addr_flat, ret_street) = curs.fetchone()
+     ret_addr_flat, ret_street, ret_street_type, ret_addr_city_code) = curs.fetchone()
 
     if ret_flag:
         sql_ent = """SELECT "Предприятия".opf_dl as opf_dl, \
@@ -71,12 +71,14 @@ trim(replace("Предприятие", coalesce("Предприятия".opf, ''
         (opf_dl, opf_name, name, legal_name, inn) = curs.fetchone()
 
         logging.info('app.l_book_counteragents_update(name={}, opf_dl={},\
-opf_name={}, inn={}, \
-kladr_street={}, street={}, house={}, building={}, \
-flat={});'.format(name, opf_dl, opf_name, inn,
-                  ret_addr_kladr_street, ret_street,
-                  ret_addr_house, ret_addr_block,
-                  ret_addr_flat))
+ opf_name={}, inn={},\
+ city_kladr={}, kladr_street={}, street={}, street_type={},\
+ house={}, building={},\
+ flat={});'.format(name, opf_dl, opf_name, inn,
+                   ret_addr_city_code,
+                   ret_addr_kladr_street, ret_street, ret_street_type,
+                   ret_addr_house, ret_addr_block,
+                   ret_addr_flat))
 
         # if OK loc_status = 1
         loc_status = int(bool(opf_dl and name and inn

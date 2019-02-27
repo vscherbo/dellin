@@ -309,6 +309,18 @@ class DellinAPI():
         self.payload.update({"addNumber": add_num})
         return self.dl_post(self.url_phones_update)
 
+
+    def dl_any_address_add(self, params):
+        """ добавление адреса, как по КЛАДР, так и произвольного
+        """
+        self.payload = params.copy()
+        self.payload.update(self.customers_auth())
+        if self.session_id:
+            return self.dl_post(self.url_addresses_update)
+        else:
+            return self.payload
+
+
     def dl_address_add(self, ca_id, street_kladr, house, building=None,
                        structure=None, flat=None):
         self.payload = self.customers_auth()
