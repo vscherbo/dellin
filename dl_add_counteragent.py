@@ -44,7 +44,7 @@ def main():
                                help='Произвольный адрес')
     args = dl_app.parser.parse_args()
 
-    app = dl_app.DL_app(args=args, description='DL contact add')
+    app = dl_app.DL_app(args=args, description='DL counteragent add')
     logging.info("args=%s", args)
 
     app.login(auth=True)
