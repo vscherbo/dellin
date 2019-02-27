@@ -121,7 +121,7 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
         dl_res = app.dl.dl_book_counteragents_update(
             opf_dl, name, inn,
             street_kladr=ret_addr_kladr_street,
-            house=ret_addr_house,
+            house=ret_addr_house[:5],
             building=ret_addr_block,
             structure=None,
             flat=ret_addr_flat)
