@@ -8,9 +8,13 @@ country_id = (SELECT c.country_id FROM shp.dl_countries c WHERE c.country_name =
 AND juridical) 
     SELECT opf FROM 
     (
-    SELECT trim('''" ' FROM substring (regexp_replace("ЮрНазвание", '[)(]', '', 'g') from '^[а-яА-Я]+[ "'']+') ) as opf FROM "Предприятия" where "Предприятия"."Код" = $1."Код"
-    UNION
-    SELECT trim('''" ' FROM substring (regexp_replace("ЮрНазвание", '[)(]', '', 'g') from '[ "'']+[а-яА-Я]+$') ) FROM "Предприятия" where "Предприятия"."Код" = $1."Код"
+     SELECT trim('''" ' FROM substring (regexp_replace("ЮрНазвание", '[)(]', '', 'g')
+            from '^[[:space:]]*[а-яА-Я]+[ "'']+') ) as opf FROM "Предприятия"
+     where "Предприятия"."Код" = $1."Код"
+     UNION
+     SELECT trim('''" ' FROM substring (regexp_replace("ЮрНазвание", '[)(]', '', 'g')
+            from '[ "'']+[а-яА-Я]+[[:space:]]*$') ) FROM "Предприятия"
+    where "Предприятия"."Код" = $1."Код"
     ) o
     WHERE opf is NOT NULL and opf IN (SELECT * FROM dl_opf)
 
