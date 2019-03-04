@@ -70,7 +70,7 @@ trim(replace("Предприятие", coalesce("Предприятия".opf, ''
         curs.execute(sql_ent)
         (opf_dl, opf_name, name, legal_name, inn) = curs.fetchone()
 
-        logging.info('app.l_book_counteragents_update(name={}, opf_dl={},\
+        logging.info('app.l_book_ca_update(name={}, opf_dl={},\
  opf_name={}, inn={},\
  city_kladr={}, kladr_street={}, street={}, street_type={},\
  house={}, building={},\
@@ -81,8 +81,8 @@ trim(replace("Предприятие", coalesce("Предприятия".opf, ''
                    ret_addr_flat))
 
         # if OK loc_status = 1
-        loc_status = int(bool(opf_dl and name and inn
-                              and ret_addr_kladr_street and ret_addr_house))
+        loc_status = int(bool(opf_dl and name and inn and ret_addr_house))
+                              # and ret_addr_kladr_street and ret_addr_house))
 
         ca_params_sql = curs.mogrify(u"INSERT INTO shp.dl_ca_params\
 (arc_code, any_address,\
@@ -108,24 +108,36 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
                     legal_name))
             if inn is None:
                 err_params.append(ERR_REASON['inn'])
-            if ret_addr_kladr_street is None:
-                err_params.append('{} (улица: {})'.format(
-                    ERR_REASON['street_kladr'],
-                    ret_street))
             if ret_addr_house is None:
                 err_params.append(ERR_REASON['house'])
             print(ca_params_error(err_params), file=sys.stderr, end='',
                   flush=True)
             return
 
-        dl_res = app.dl.dl_book_counteragents_update(
-            opf_dl, name, inn,
-            street_kladr=ret_addr_kladr_street,
-            house=ret_addr_house[:5],
-            building=ret_addr_block,
-            structure=None,
-            flat=ret_addr_flat)
-        logging.info('dl_book_counteragents_update res=%s', dl_res)
+        params = {}
+        params["name"] = name
+        params["form"] = opf_dl
+        params["inn"] = inn
+
+        jur_address = {}
+        jur_address["house"] = ret_addr_house[:5]
+        jur_address["building"] = ret_addr_block
+        jur_address["structure"] = None
+        jur_address["flat"] = ret_addr_flat
+
+        # обработка улицы без кода КЛАДР
+        if ret_addr_kladr_street is None:
+            custom_street = {}
+            custom_street["code"] = ret_addr_city_code.ljust(25, '0')
+            custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
+            jur_address["customStreet"] = custom_street
+        else:
+            jur_address["street"] = ret_addr_kladr_street
+        params["juridicalAddress"] = jur_address
+
+        dl_res = app.dl.dl_book_ca_update(params)
+
+        logging.info('dl_book_ca_update res=%s', dl_res)
 
         if app.dl.status_code == 200:
             if 'success' in dl_res:

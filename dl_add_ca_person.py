@@ -21,6 +21,7 @@ ERR_REASON = {}
 ERR_REASON['name'] = 'ФИО'
 ERR_REASON['doc_prenum'] = 'серия документа'
 ERR_REASON['doc_number'] = 'номер документа'
+PERSON_DOCS = ('unknown', 'passport', 'drivingLicence', 'foreignPassport')
 
 
 def ca_params_error(params):
@@ -71,8 +72,6 @@ def main():
 
     curs = app.conn.cursor()
 
-    person_docs = ('unknown', 'passport', 'drivingLicence', 'foreignPassport')
-
     sql_doc = """
         SELECT doc_type, doc_prenum, doc_num, doc_issue::varchar, e."ФИО"
         FROM person_doc
@@ -85,13 +84,13 @@ def main():
     params["form"] = '0xAB91FEEA04F6D4AD48DF42161B6C2E7A'
     params["name"] = person_name
     doc = {}
-    doc["type"] = person_docs[doc_type]
+    doc["type"] = PERSON_DOCS[doc_type]
     doc["serial"] = doc_prenum
     doc["number"] = doc_num
     doc["date"] = doc_issue
     params["document"] = doc
 
-    logging.info('dl_book_ca_person_update(doc_type=%s, doc_prenum=%s, doc_num=%s,\
+    logging.info('dl_book_ca_update(doc_type=%s, doc_prenum=%s, doc_num=%s,\
                   doc_issue=%s, person_name=%s)',
                  doc_type, doc_prenum, doc_num, doc_issue, person_name)
 
@@ -99,8 +98,8 @@ def main():
     if not check_params(person_name, doc_prenum, doc_num):
         return
 
-    dl_res = app.dl.dl_book_ca_person_update(params)
-    logging.info('dl_book_ca_person_update res=%s', dl_res)
+    dl_res = app.dl.dl_book_ca_update(params)
+    logging.info('dl_book_ca_update res=%s', dl_res)
 
     if app.dl.status_code == 200:
         if 'success' in dl_res:
@@ -108,10 +107,11 @@ def main():
             logging.info('state=%s, counteragentID=%s',
                          dl_res['success']['state'], ret_ca_id)
             print(ret_ca_id, end='', flush=True)
-            loc_sql = curs.mogrify(u"""INSERT INTO ext.dl_counteragents(id, type,
-                                   status) VALUES(%s,%s,%s)
-                                   ON CONFLICT DO NOTHING;""",
-                                   (ret_ca_id, 'private', 1))
+            loc_sql = curs.mogrify(u"INSERT INTO ext.dl_counteragents(id, type,\
+ name, dl_doc_type, dl_doc_serial, dl_doc_number, status)\
+ VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;",
+                                   (ret_ca_id, 'private', person_name,
+                                    PERSON_DOCS[doc_type], doc_prenum, doc_num, 1))
             logging.info(u"loc_sql=%s", loc_sql)
             curs.execute(loc_sql)
             app.conn.commit()

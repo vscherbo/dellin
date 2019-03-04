@@ -248,7 +248,7 @@ class DellinAPI():
     def dl_book_counteragents_update(self, opf_uid, name, inn, street_kladr,
                                      house,
                                      building=None, structure=None, flat=None):
-        """ создание и обновление контрагента-юр.лицо
+        """ OBSOLETE создание и обновление контрагента-юр.лицо
         """
         self.payload = self.customers_auth()
         self.payload.update({"form": opf_uid})
@@ -267,19 +267,14 @@ class DellinAPI():
         # DEBUG return json.dumps(self.payload)
         return self.dl_post(self.url_book_counteragents_update)
 
-    def dl_book_ca_person_update(self, params):
-        """ создание и обновление контрагента-физ.лицо
+    def dl_book_ca_update(self, params):
+        """ создание и обновление контрагента
         """
         self.payload = params.copy()
         self.payload.update(self.customers_auth())
-        # logging.info('data=%s'.format(data))
 
         if self.session_id:
-            # return self.dl_post(self.url_request_v2)
             return self.dl_post(self.url_book_counteragents_update)
-            # return requests.post(self.url_request_v2,
-            #                     data=json.dumps(data),
-            #                      headers=self.headers).json()
         else:
             return self.payload
 
