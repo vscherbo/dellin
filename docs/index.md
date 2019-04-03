@@ -1,6 +1,6 @@
 ---
 title: Dellin API
-layout: default
+layout: dellin
 description: Использование API dellin.ru
 ---
 # Деловые линии API

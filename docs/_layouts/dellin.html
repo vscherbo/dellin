@@ -4,15 +4,13 @@ layout: default
 <div>
 <ul id="mobile-menu">
 {% for item in site.data.pages %}
-{{ item.title }}
 <li class="{% if item.url == page.url %}active{% endif %}">
       <a href="{{ site.baseurl }}{{ item.url }}" alt="{{ item.title }}">{{ item.title }}</a>
 </li>
 {% endfor %}
+{% include mobile-menu.html color="#777777" width="757" %}
 </ul>
 
 {{content}}
-{% for item in site.data.pages %}
-{{ item.title }}
-{% endfor %}
 </div>
+
