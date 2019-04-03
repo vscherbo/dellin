@@ -1,5 +1,10 @@
 CREATE OR REPLACE VIEW arc_energo.vw_dl_shipping AS
- SELECT format('%s-%s-%s'::text, date_part('year'::text, 'now'::text::date), "substring"(b."инфо"::text, '[0-9]+\.([0-9]+){1}'::text), "substring"(b."инфо"::text, '([0-9]+){1}\.[0-9]+'::text)) AS dl_dt,
+ SELECT
+--format('%s-%s-%s'::text, date_part('year'::text, 'now'::text::date), "substring"(b."инфо"::text, '[0-9]+\.([0-9]+){1}'::text), "substring"(b."инфо"::text, '([0-9]+){1}\.[0-9]+'::text)) AS dl_dt,
+format('20%s-%s-%s'::text,
+"substring"(b."инфо"::text, '[0-9]+\.([0-9]+){1}, отметил'::text),
+"substring"(b."инфо"::text, '([0-9]+){1}\.[0-9]+, отметил'::text),
+"substring"(b."инфо"::text, '([0-9]+){1}\.[0-9]+\.[0-9]+, отметил'::text))  AS dl_dt,
     f."Ф_ИНН" AS dl_sender,
     c."ИНН" AS dl_receiver,
     c."Код" AS receiver_code,

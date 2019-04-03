@@ -10,18 +10,18 @@ create type shp.dl_counteragent as (
 "form" varchar,
 "type" varchar,
 "inn" varchar,
-"addresses" integer,
+"document" json,
 "Email" varchar,
 "Phone" varchar,
-"document" json
+"addresses" integer
 );
 
 create view shp.vw_dl_counteragents as
 select *,
-document->'type' as dl_doc_type,
-document->'serial' as dl_doc_serial,
-document->'number' as dl_doc_number,
-document->'date'  as dl_doc_date
+trim('"' from (document->'type')::varchar) as dl_doc_type,
+trim('"' from (document->'serial')::varchar)  as dl_doc_serial,
+trim('"' from (document->'number')::varchar)  as dl_doc_number,
+trim('"' from (document->'date')::varchar)   as dl_doc_date
 from 
 (select (jsonb_populate_record(null::shp.dl_counteragent, jsonb_array_elements(values)->'counteragent')).* from ext.dl_counteragents_json) cnta;
 

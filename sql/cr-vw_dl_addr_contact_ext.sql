@@ -15,7 +15,7 @@ SELECT
     to_timestamp(jsonb_array_elements(c.jb) ->> 'lastUpdate'::text, 'YYYY-MM-DD"T"HH24:MI:SSZ'::text) AS lastupdate
    FROM shp.vw_dl_counteragents ca
     LEFT JOIN shp.vw_dl_addresses a ON a.ca_id = ca.id AND a."type" = 'delivery'
-    LEFT JOIN shp.dl_addr_contacts_json c ON c.addr_id = a.id;
+    LEFT JOIN ext.dl_addr_contacts_json c ON c.addr_id = a.id;
 
 -- Permissions
 -- ALTER TABLE shp.vw_dl_addr_contact_ext OWNER TO arc_energo;

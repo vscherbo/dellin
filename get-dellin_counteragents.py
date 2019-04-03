@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+print('OBSOLETE !!!!')
+print('see get-dl-ca.py')
+sys.exit(123)
 import logging
 import os
-import sys
 import argparse
 import configparser
 
@@ -39,7 +42,7 @@ user = config['dl_login']['user']
 pw = config['dl_login']['pw']
 
 dl = DellinAPI(ark_appkey, user, pw)
-logging.info("logged in sess_id={0}".format(dl.sessionID))
+logging.info("logged in sess_id={0}".format(dl.session_id))
 
 
 counteragents_res = dl.dl_book_counteragents()

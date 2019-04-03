@@ -1,97 +1,173 @@
 #!/usr/bin/env python3
-
-import os
-import logging
-import psycopg2
-import argparse
-import configparser
-from shp_dellin import DellinAPI
-import sys
-
-
 """
 Добавление записи в справочник контрагентов Деловых линий (ДЛ)
 по информации из БД arc_energo
+"""
 
+import logging
+import sys
+import dl_app
+
+
+"""
 1. ?Проверка отсутствия такого контрагента
 2. Если отсутствует, выбор ОПФ из справочника ДЛ
-3. Получение адресных данных из dadata.ru, ext.dl_places, ext.dl_streets
-4. 
-5. 
+3. Получение адресных данных из функции
+   shp.dl_ca_addr_fields ( dadata.ru, ext.dl_places, ext.dl_streets)
+4. Добавление контрагента в справочник ДЛ
+5. Добавление в таблицу dl_counteragents со статусом 1
 """
 
-log_format = '[%(filename)-21s:%(lineno)4s - %(funcName)20s()] %(levelname)-7s | %(asctime)-15s | %(message)s'
-
-(prg_name, prg_ext) = os.path.splitext(os.path.basename(__file__))
-conf_file_name = "dl.conf"
-
-parser = argparse.ArgumentParser(description='add counteragent to address book of Dellin')
-parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
-parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
-parser.add_argument('--code', type=int, help='arc_energo.Предприятия.Код')
-parser.add_argument('--log_to_file', type=str, default='stdout', help='log destination')
-parser.add_argument('--log_level', type=str, default="DEBUG", help='log level')
-args = parser.parse_args()
-
-numeric_level = getattr(logging, args.log_level, None)
-if not isinstance(numeric_level, int):
-    raise ValueError('Invalid log level: %s' % numeric_level)
-
-if 'stdout' == args.log_to_file:
-    logging.basicConfig(stream=sys.stdout, format=log_format, level=numeric_level)
-else:
-    logging.basicConfig(filename=args.log_to_file, format=log_format, level=numeric_level)
+ERR_REASON = {}
+ERR_REASON['name'] = 'Название'
+ERR_REASON['opf_dl'] = 'ОПФ по справочнику Деллин'
+ERR_REASON['inn'] = 'ИНН'
+ERR_REASON['street_kladr'] = 'код улицы юр. адреса по КЛАДР'
+ERR_REASON['house'] = 'номер дома'
 
 
-config = configparser.ConfigParser(allow_no_value=True)
-config.read(args.conf)
-API_KEY = config['dadata_login']['API_KEY']
+def ca_params_error(params):
+    """
+    returns error message for user
+    """
+    return 'Отсутствуют значения: ' + '/'.join(params)
 
-ark_appkey = config['dl_login']['ark_appkey']
-user = config['dl_login']['user']
-pw = config['dl_login']['pw']
 
-conn = psycopg2.connect("host='" + args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
-# TODO check return code
+def main():
+    """
+    Just main proc
+    """
 
-curs = conn.cursor()
+    dl_app.parser.add_argument('--code', type=int, required=True,
+                               help='arc_energo.Предприятия.Код')
+    dl_app.parser.add_argument('--address', type=str, required=False,
+                               help='Произвольный адрес')
+    args = dl_app.parser.parse_args()
 
-"""
-addr_sql = 
-WITH dd AS (SELECT * FROM dadata_address({}))
-SELECT ret_flg, street_code, ret_addr_house, ret_addr_block, ret_addr_flat FROM dd
-join ext.dl_streets ds ON ds.search_string = dd.ret_addr_street 
-AND ds.city_id IN (SELECT dp.city_id FROM ext.dl_places dp WHERE dp.search_string = dd.ret_addr_city)
-"""
+    app = dl_app.DL_app(args=args, description='DL counteragent add')
+    logging.info("args=%s", args)
 
-addr_sql = "select * from shp.dl_ca_addr_fields({})"
-curs.execute(addr_sql.format(args.code))
-(ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block, ret_addr_flat) = curs.fetchone()
+    app.login(auth=True)
+    app.db_login()
 
-if ret_flag:
-    sql_ent = """
-        with ent as (SELECT "Предприятия".opf as opf, trim(replace("Предприятие", "Предприятия".opf, '')) as ent_name,
-        "ИНН" as inn FROM "Предприятия" WHERE "Код"={})
-        select ol.uid, ent.ent_name, ent.inn from ent
-        join shp.dl_opf_list ol on ent.opf = ol.opf_name 
-        and country_id = (select c.country_id from shp.dl_countries c where c.country_name = 'Россия');
-        """.format(args.code)
-    curs.execute(sql_ent)
-    (opf, name, inn) = curs.fetchone()
+    curs = app.conn.cursor()
 
-    dl = DellinAPI(ark_appkey, user, pw)
-    logging.info("logged in sess_id={0}".format(dl.sessionID))
+    if args.address:
+        addr_sql = "select * from shp.dl_ca_addr_fields({}, '{}')"
+        curs.execute(addr_sql.format(args.code, args.address))
+    else:
+        addr_sql = "select * from shp.dl_ca_addr_fields({})"
+        curs.execute(addr_sql.format(args.code))
+    (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block,
+     ret_addr_flat, ret_street, ret_street_type, ret_addr_city_code) = curs.fetchone()
 
-    logging.info('dl.dl_book_counteragents_update(opf={}, name={}, inn={}, kladr_street={}, house={}, building={}, structure={}, flat={});' \
-            .format(opf, name, inn, ret_addr_kladr_street, ret_addr_house, ret_addr_block, None, ret_addr_flat))
-    res = dl.dl_book_counteragents_update(opf, name, inn,
-            street_kladr=ret_addr_kladr_street, 
-            house = ret_addr_house, 
-            building = ret_addr_block, 
-            structure=None,
-            flat = ret_addr_flat)
-    logging.info('dl_book_counteragents_update res={}'.format(res))
-else:
-    logging.error('dadata_address returns False')
+    if ret_flag:
+        sql_ent = """SELECT "Предприятия".opf_dl as opf_dl, \
+"Предприятия".opf as opf_name, \
+trim(replace("Предприятие", coalesce("Предприятия".opf, ''), '')) as ent_name,\
+"ЮрНазвание" as legal_name, \
+"ИНН" as inn FROM "Предприятия" WHERE "Код"={};""".format(args.code)
+        curs.execute(sql_ent)
+        (opf_dl, opf_name, name, legal_name, inn) = curs.fetchone()
 
-dl.dl_logout()
+        logging.info('app.l_book_ca_update(name={}, opf_dl={},\
+ opf_name={}, inn={},\
+ city_kladr={}, kladr_street={}, street={}, street_type={},\
+ house={}, building={},\
+ flat={});'.format(name, opf_dl, opf_name, inn,
+                   ret_addr_city_code,
+                   ret_addr_kladr_street, ret_street, ret_street_type,
+                   ret_addr_house, ret_addr_block,
+                   ret_addr_flat))
+
+        # if OK loc_status = 1
+        loc_status = int(bool(opf_dl and name and inn and ret_addr_house))
+                              # and ret_addr_kladr_street and ret_addr_house))
+
+        ca_params_sql = curs.mogrify(u"INSERT INTO shp.dl_ca_params\
+(arc_code, any_address,\
+ca_name, legal_name, inn, opf_dl, opf_name, \
+street_kladr, street, house, chk_result)\
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
+                                     (int(args.code), args.address,
+                                      name, legal_name, inn, opf_dl, opf_name,
+                                      ret_addr_kladr_street,
+                                      ret_street,
+                                      ret_addr_house, loc_status))
+        curs.execute(ca_params_sql)
+        app.conn.commit()
+
+        # do not call dellin api
+        if loc_status != 1:
+            err_params = []
+            if name is None:
+                err_params.append(ERR_REASON['name'])
+            if opf_dl is None:
+                err_params.append('{} (ЮрНазвание: {})'.format(
+                    ERR_REASON['opf_dl'],
+                    legal_name))
+            if inn is None:
+                err_params.append(ERR_REASON['inn'])
+            if ret_addr_house is None:
+                err_params.append(ERR_REASON['house'])
+            print(ca_params_error(err_params), file=sys.stderr, end='',
+                  flush=True)
+            return
+
+        params = {}
+        params["name"] = name
+        params["form"] = opf_dl
+        params["inn"] = inn
+
+        jur_address = {}
+        jur_address["house"] = ret_addr_house[:5]
+        jur_address["building"] = ret_addr_block
+        jur_address["structure"] = None
+        jur_address["flat"] = ret_addr_flat
+
+        # обработка улицы без кода КЛАДР
+        if ret_addr_kladr_street is None:
+            custom_street = {}
+            custom_street["code"] = ret_addr_city_code.ljust(25, '0')
+            custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
+            jur_address["customStreet"] = custom_street
+        else:
+            jur_address["street"] = ret_addr_kladr_street
+        params["juridicalAddress"] = jur_address
+
+        dl_res = app.dl.dl_book_ca_update(params)
+
+        logging.info('dl_book_ca_update res=%s', dl_res)
+
+        if app.dl.status_code == 200:
+            if 'success' in dl_res:
+                ret_ca_id = dl_res['success']['counteragentID']
+                logging.info('state=%s, counteragentID=%s',
+                             dl_res['success']['state'], ret_ca_id)
+                print(ret_ca_id, end='', flush=True)
+                # add lastUpdate=now()
+                loc_sql = curs.mogrify(u"""INSERT INTO
+     ext.dl_counteragents(id, inn, status)
+     VALUES(%s,%s,%s) ON CONFLICT DO NOTHING;""", (ret_ca_id, inn, 1))
+                logging.info(u"loc_sql=%s", loc_sql)
+                curs.execute(loc_sql)
+                app.conn.commit()
+            else:
+                err_str = 'ERROR={}'.format(dl_res)
+                logging.error(err_str)
+                print(err_str, file=sys.stderr, end='', flush=True)
+        else:
+            err_str = 'ERROR={}'.format(app.dl.err_msg)
+            logging.error(err_str)
+            print(err_str, file=sys.stderr, end='', flush=True)
+
+    else:
+        err_str = 'Error in parsing address'
+        logging.error(err_str)
+        print(err_str, file=sys.stderr, end='', flush=True)
+
+    app.logout()
+
+
+if __name__ == '__main__':
+    main()

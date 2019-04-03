@@ -8,4 +8,4 @@ OUT dl_dt text, OUT sender_inn text, OUT receiver_inn text)
 AS $function$
 SELECT dl_dt, dl_sender, dl_receiver AS RESULT FROM arc_energo.vw_dl_shipping
 WHERE dl_dt::date = date_trunc('DAY', in_query_dt);
- $function$
+$function$

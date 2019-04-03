@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
 import logging
 import argparse
 import configparser
-from shp_dellin import DellinAPI
-import sys
 import psycopg2
+from shp_dellin import DellinAPI
 
-class DL_app():
+class DL_app(object):
     log_format = '[%(filename)-21s:%(lineno)4s - %(funcName)20s()] %(levelname)-7s | %(asctime)-15s | %(message)s'
     conf_file_name = "dl.conf"
 
@@ -40,7 +40,7 @@ class DL_app():
             self.dl = DellinAPI(self.ark_appkey)
         loc_return = (200 == self.dl.status_code)
         if loc_return:
-            logging.info("logged in sess_id={0}".format(self.dl.sessionID))
+            logging.info("logged in sess_id={0}".format(self.dl.session_id))
         else:
             logging.error("loggin error. status_code={0}".format(self.dl.status_code))
         return loc_return
@@ -53,14 +53,13 @@ class DL_app():
 
     def logout(self):
         self.dl.dl_logout()
-        if self.args.pg_srv is not None:
-            if self.conn:
-                self.conn.commit()
-                self.conn.close()
+        if self.conn and not self.conn.closed:
+            self.conn.commit()
+            self.conn.close()
 
 conf_file_name = "dl.conf"
 parser = argparse.ArgumentParser()
 parser.add_argument('--conf', type=str, default=conf_file_name, help='conf file')
-parser.add_argument('--pg_srv', type=str, default='vm-pg-devel.arc.world', help='PG hostname')
+parser.add_argument('--pg_srv', type=str, default='localhost', help='PG hostname')
 parser.add_argument('--log_file', type=str, default='stdout', help='log destination')
 parser.add_argument('--log_level', type=str, default="DEBUG", help='log level')

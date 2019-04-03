@@ -1,0 +1,6 @@
+--  psql -v CA_ID=12345
+
+delete from ext.dl_addresses_json where ca_id=:CA_ID;
+\copy ext.dl_addresses_json from :csv with (format csv, delimiter '^');
+delete from ext.dl_addresses where ca_id=:CA_ID; 
+insert into ext.dl_addresses (select *,0 from shp.vw_dl_addresses where ca_id=:CA_ID);
