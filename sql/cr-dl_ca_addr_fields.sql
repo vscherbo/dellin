@@ -8,13 +8,12 @@ out ret_addr_block varchar,
 out ret_addr_flat varchar,
 out ret_addr_street varchar,
 out ret_addr_street_type varchar,
-out ret_addr_city_code varchar
+out ret_addr_city_code varchar,
+out ret_addr_city varchar
 )
  RETURNS record
  LANGUAGE plpgsql
 AS $function$
-declare
-ret_addr_city varchar;
 begin
     SELECT * FROM dadata_address(arg_code, arg_addr_text)
     into ret_flg, ret_addr_city, ret_addr_city_code, ret_addr_street, ret_addr_street_type, ret_addr_house, ret_addr_block, ret_addr_flat ;
