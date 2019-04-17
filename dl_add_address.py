@@ -43,8 +43,8 @@ def main():
     addr_sql = "select * from shp.dl_ca_addr_fields({}, '{}')"
     curs.execute(addr_sql.format(-1, args.address))
     (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block,
-     ret_addr_flat, ret_street, ret_street_type,
-     ret_addr_city_code) = curs.fetchone()
+     ret_addr_flat, ret_street, ret_street_type, ret_addr_city_code,
+     ret_addr_city) = curs.fetchone()
 
     if ret_flag:
         logging.info('app.dl_address_add(ca_id={}, kladr_street={}, street={},\
@@ -64,7 +64,7 @@ def main():
 
         params = {}
         params["counteragentID"] = args.ca_id
-        params["house"] = ret_addr_house
+        params["house"] = ret_addr_house[:5]
         params["building"] = ret_addr_block
         params["structure"] = None
         params["flat"] = ret_addr_flat
@@ -73,7 +73,7 @@ def main():
         else:
             custom_street = {}
             custom_street["code"] = ret_addr_city_code.ljust(25, '0')
-            custom_street["street"] = ret_street_type
+            custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
             params["customStreet"] = custom_street
 
         dl_res = app.dl.dl_any_address_add(params)
@@ -106,7 +106,7 @@ def main():
             print(err_str, file=sys.stderr, end='', flush=True)
 
     else:
-        err_str = 'Error in parsing address'
+        err_str = 'Ошибка разбора адреса: {}'. format(ret_addr_city)
         logging.error(err_str)
         print(err_str, file=sys.stderr, end='', flush=True)
 
