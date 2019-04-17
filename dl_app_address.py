@@ -26,7 +26,7 @@ if app.login(auth=True):
                 print(ret_addr_id, end='', flush=True)
                 app.db_login()
                 curs = app.conn.cursor()
-                loc_sql = curs.mogrify('INSERT INTO ext.dl_addresses(ca_id, id, terminal_id, is_terminal, type, status) VALUES(%s,%s,%s,%s,%s,%s);', # lastUpdate=now()
+                loc_sql = curs.mogrify('INSERT INTO ext.dl_addresses(ca_id, id, terminal_id, is_terminal, type, status) VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;', # lastUpdate=now()
                     (args.ca_id, ret_addr_id, args.term_id, True, 'delivery', 1  ))
                 logging.info("loc_sql={}".format(loc_sql))
                 curs.execute(loc_sql)
