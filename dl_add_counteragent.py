@@ -20,17 +20,18 @@ import dl_app
 
 ERR_REASON = {}
 ERR_REASON['name'] = 'Название'
-ERR_REASON['opf_dl'] = 'ОПФ по справочнику Деллин'
+ERR_REASON['opf_dl'] = 'ОПФ (организационно-правовая форма) юр.лица по справочнику Деллин'
 ERR_REASON['inn'] = 'ИНН'
 ERR_REASON['street_kladr'] = 'код улицы юр. адреса по КЛАДР'
-ERR_REASON['house'] = 'номер дома'
+ERR_REASON['house'] = 'номер дома юр. адреса'
+ERR_REASON['opf_none'] = 'ОПФ юр.лица по справочнику Деллин или произвольная ОПФ'
 
 
 def ca_params_error(params):
     """
     returns error message for user
     """
-    return 'Отсутствуют значения: ' + '/'.join(params)
+    return 'Отсутствуют обязательные для Деллин значения: ' + '/'.join(params)
 
 
 def main():
@@ -42,6 +43,14 @@ def main():
                                help='arc_energo.Предприятия.Код')
     dl_app.parser.add_argument('--address', type=str, required=False,
                                help='Произвольный адрес')
+    dl_app.parser.add_argument('--name', type=str, required=False,
+                               help='Название контрагента без ОПФ')
+    dl_app.parser.add_argument('--form_name', type=str, required=False,
+                               help='название ОПФ')
+    dl_app.parser.add_argument('--country_id', type=str, required=False,
+                               help='UID страны')
+    dl_app.parser.add_argument('--juridical', type=bool, required=False,
+                               help='флаг юрлицо')
     args = dl_app.parser.parse_args()
 
     app = dl_app.DL_app(args=args, description='DL counteragent add')
@@ -59,9 +68,14 @@ def main():
         addr_sql = "select * from shp.dl_ca_addr_fields({})"
         curs.execute(addr_sql.format(args.code))
     (ret_flag, ret_addr_kladr_street, ret_addr_house, ret_addr_block,
-     ret_addr_flat, ret_street, ret_street_type, ret_addr_city_code) = curs.fetchone()
+     ret_addr_flat, ret_street, ret_street_type, ret_addr_city_code,
+     ret_addr_city) = curs.fetchone()
 
-    if ret_flag:
+    if not ret_flag:
+        err_str = 'Ошибка при разборе адреса через dadata.ru: {}'.format(ret_addr_city)
+        logging.error(err_str)
+        print(err_str, file=sys.stderr, end='', flush=True)
+    else:
         sql_ent = """SELECT "Предприятия".opf_dl as opf_dl, \
 "Предприятия".opf as opf_name, \
 trim(replace("Предприятие", coalesce("Предприятия".opf, ''), '')) as ent_name,\
@@ -81,8 +95,23 @@ trim(replace("Предприятие", coalesce("Предприятия".opf, ''
                    ret_addr_flat))
 
         # if OK loc_status = 1
-        loc_status = int(bool(opf_dl and name and inn and ret_addr_house))
+        # loc_status = int(bool(opf_dl and name and inn and ret_addr_house))
+        loc_status = int(bool(name and inn))
+                              # and ret_addr_house))
                               # and ret_addr_kladr_street and ret_addr_house))
+
+        if not opf_dl:
+            if args.form_name:
+                custom_form = {}
+                custom_form["formName"] = args.form_name
+                name = args.name
+                opf_name = args.form_name
+                custom_form["countryUID"] = args.country_id
+                custom_form["juridical"] = args.juridical
+            else:
+                loc_status = -1
+
+        logging.info('dl_book_ca_update loc_status=%s', loc_status)
 
         ca_params_sql = curs.mogrify(u"INSERT INTO shp.dl_ca_params\
 (arc_code, any_address,\
@@ -100,27 +129,30 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
         # do not call dellin api
         if loc_status != 1:
             err_params = []
-            if name is None:
-                err_params.append(ERR_REASON['name'])
-            if opf_dl is None:
-                err_params.append('{} (ЮрНазвание: {})'.format(
-                    ERR_REASON['opf_dl'],
-                    legal_name))
-            if inn is None:
-                err_params.append(ERR_REASON['inn'])
-            if ret_addr_house is None:
-                err_params.append(ERR_REASON['house'])
-            print(ca_params_error(err_params), file=sys.stderr, end='',
-                  flush=True)
+            if loc_status == -1:
+                err_params.append(ERR_REASON['opf_none'])
+            else:
+                if name is None:
+                    err_params.append(ERR_REASON['name'])
+                if inn is None:
+                    err_params.append(ERR_REASON['inn'])
+                #if (ret_addr_kladr_street is not None) and (ret_addr_house is None):
+                #    err_params.append(ERR_REASON['house'])
+
+            if err_params:
+                print(ca_params_error(err_params), file=sys.stderr, end='',
+                      flush=True)
             return
 
         params = {}
         params["name"] = name
-        params["form"] = opf_dl
         params["inn"] = inn
+        if opf_dl:
+            params["form"] = opf_dl
+        else:
+            params["customForm"] = custom_form
 
         jur_address = {}
-        jur_address["house"] = ret_addr_house[:5]
         jur_address["building"] = ret_addr_block
         jur_address["structure"] = None
         jur_address["flat"] = ret_addr_flat
@@ -133,7 +165,14 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
             jur_address["customStreet"] = custom_street
         else:
             jur_address["street"] = ret_addr_kladr_street
+
+        if ret_addr_house:
+            jur_address["house"] = ret_addr_house[:5]
+        else:
+            jur_address["house"] = '1'
+
         params["juridicalAddress"] = jur_address
+        logging.info('dl_book_ca_update params=%s', params)
 
         dl_res = app.dl.dl_book_ca_update(params)
 
@@ -161,10 +200,6 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
             logging.error(err_str)
             print(err_str, file=sys.stderr, end='', flush=True)
 
-    else:
-        err_str = 'Error in parsing address'
-        logging.error(err_str)
-        print(err_str, file=sys.stderr, end='', flush=True)
 
     app.logout()
 
