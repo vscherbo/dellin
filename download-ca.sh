@@ -15,12 +15,13 @@ rc=$?
 if [ $rc -eq 0 ]
 then
     # выполняем на PG, параметр -h vm-pg опускаем 
-    psql --echo-all --variable ON_ERROR_STOP=ON -U arc_energo -f sql/copy-dl-counteragents.sql
+    # psql --echo-all --variable ON_ERROR_STOP=ON -U arc_energo -f sql/copy-dl-counteragents.sql
+    psql --echo-all --variable ON_ERROR_STOP=ON -U arc_energo -f sql/inc-dl-counteragents.sql
     rc=$?
 fi
 
 exec 1>&3
 
-egrep -v -f "${LOG}"-template "$LOG" | mail -s "$LOG events" it@kipspb.ru
+egrep -v -f "${LOG}"-template "$LOG" | mail -E -s "$LOG events" it@kipspb.ru
 
 exit $rc
