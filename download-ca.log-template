@@ -8,3 +8,6 @@
 ^\\copy
 ^COPY
 ^INSERT
+^DO UPDATE SET
+ = EXCLUDED
+status = 0
