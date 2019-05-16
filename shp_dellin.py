@@ -17,7 +17,7 @@ class DellinAPI():
     host = "https://api.dellin.ru"
     url_login = '%s/v1/customers/login.json' % host
     url_sfrequest = '%s/v1/customers/sfrequest.json' % host
-    url_tracker = '%s/v1/public/tracker.json' % host
+    url_tracker = '%s/v2/public/tracker.json' % host
     url_tracker_adv = '%s/v1/public/tracker_advanced.json' % host
     url_calculator = '%s/v1/public/calculator.json' % host
     url_logout = '%s/v1/customers/logout.json' % host
@@ -122,6 +122,8 @@ class DellinAPI():
         finally:
             if self.err_msg:
                 logging.error(self.err_msg)
+                ret = {}
+                ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
             if self.status_code != 200:
                 logging.error("dl_post failed, status_code=%s",
                               self.status_code)
@@ -132,6 +134,12 @@ class DellinAPI():
                 # python2 self.text = resp.text.encode('utf-8')
 
         return ret
+
+    def dl_tracker(self, doc_id):
+        self.payload = self.customers_auth()
+        self.payload["docid"] = doc_id
+        return self.dl_post(self.url_tracker)
+
 
     def dl_tracker_adv(self, sender, receiver, date_start, date_end):
         self.payload = self.customers_auth()
