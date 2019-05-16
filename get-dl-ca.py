@@ -16,7 +16,7 @@ logging.info("args={}".format(args))
 if app.login(auth=True):
     dl_res = app.dl.dl_book_counteragents()
     if 200 == app.dl.status_code:
-        logging.info('res_count={}'.format(1 + len(dl_res)))
+        logging.info('res_count={}'.format(len(dl_res)))
         with open('res-counteragents.txt', 'w') as of:
             of.write(app.dl.text.replace('\n', ''))
         ret_code = 0
