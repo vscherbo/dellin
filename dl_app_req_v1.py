@@ -32,13 +32,14 @@ def main():
     logging.info("shp_id=%d", shp_id)
     curs.callproc('shp.dl_req_params', [shp_id])
     (sender_id, sender_address_id, receiver_id, receiver_address_id, boxes,
-     wepay, pre_shipdate) = curs.fetchone()
+     wepay, pre_shipdate, delivery_type) = curs.fetchone()
     assert sender_id is not None, 'sender_id не определён'
     assert sender_address_id is not None, 'sender_address_id не определён'
     assert receiver_id is not None, 'receiver_id не определён'
     assert receiver_address_id is not None, 'receiver_address_id не определён'
     assert boxes is not None, 'boxes не определён'
     assert wepay is not None, 'wepay не определён'
+    assert delivery_type in [1, 4, 6, 20, 21], 'delivery_type - недопустимое значение'
 
     curs.callproc('shp.dl_req_sender_contacts', [shp_id])
     sender_contact_ids = [r[0] for r in curs.fetchall()]
@@ -105,7 +106,7 @@ def main():
     request["whoIsPayer"] = loc_payer
     request["primaryPayer"] = loc_payer
     request["paymentType"] = 1
-    request["deliveryType"] = 1
+    request["deliveryType"] = delivery_type
     request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
     if args.test:
         request["inOrder"] = 0
