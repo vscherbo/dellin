@@ -4,6 +4,7 @@
 DL pre-request v1
 """
 
+import sys
 import datetime
 import logging
 import json
@@ -117,11 +118,14 @@ def main():
 
     loc_auth = True
 
-    app.login(auth=loc_auth)
+    if not app.login(auth=loc_auth):
+        logging.error('login error: %s', app.dl.err_msg)
+        print(app.dl.err_msg, file=sys.stderr)
+        sys.exit(-1)
 
     dl_res = app.dl.dl_request_v1(request)
     logging.info('dl.text=%s', app.dl.text)
-    # logging.info('dl_res={}'.format(dl_res))
+    logging.debug('dl_res={}'.format(dl_res))
     logging.info(json.dumps(dl_res, ensure_ascii=False, indent=4))
     now = datetime.datetime.strftime(datetime.datetime.now(),
                                      '%Y-%m-%d %H:%M:%S')
