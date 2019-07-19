@@ -67,8 +67,11 @@ class DellinAPI():
                         'password': password}
         self.payload.update(self.public_auth())
         resp = self.dl_post(self.url_login)
-        if resp is not None:
+        if resp is not None and 'sessionID' in resp.keys():
             self.session_id = resp['sessionID']
+        else:
+            self.status_code = -1
+
 
     def public_auth(self):
         return {
@@ -124,7 +127,7 @@ class DellinAPI():
                 logging.error(self.err_msg)
                 ret = {}
                 ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
-            if self.status_code != 200:
+            elif self.status_code != 200:
                 logging.error("dl_post failed, status_code=%s",
                               self.status_code)
 
