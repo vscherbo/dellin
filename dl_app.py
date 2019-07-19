@@ -13,6 +13,7 @@ class DL_app(object):
 
     def __init__(self, args, description='Dellin application'):
         self.args = args
+        self.dl = None
         logging.getLogger(__name__).addHandler(logging.NullHandler())
         numeric_level = getattr(logging, self.args.log_level, None)
         if not isinstance(numeric_level, int):
@@ -36,18 +37,18 @@ class DL_app(object):
     def login(self, auth=False):
         if auth:
             self.dl = DellinAPI(self.ark_appkey, self.user, self.pw)
-        else:    
+        else:
             self.dl = DellinAPI(self.ark_appkey)
         loc_return = (200 == self.dl.status_code)
         if loc_return:
-            logging.info("logged in sess_id={0}".format(self.dl.session_id))
+            logging.info("logged in sess_id=%d", self.dl.session_id)
         else:
-            logging.error("loggin error. status_code={0}".format(self.dl.status_code))
+            logging.error("loggin error. status_code=%d, err_msg=%s", self.dl.status_code, self.dl.err_msg)
         return loc_return
 
 
     def db_login(self):
-        logging.debug('args={}'.format(self.args))
+        logging.debug('args=%s', self.args)
         if self.args.pg_srv is not None:
             self.conn = psycopg2.connect("host='" + self.args.pg_srv + "' dbname='arc_energo' user='arc_energo'")  # password='XXXX' - .pgpass
 
