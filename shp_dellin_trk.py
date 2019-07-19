@@ -53,6 +53,7 @@ doc_date)\
     rows = curs.fetchall()
     for (shp_id, dl_dt, doc_id) in rows:
         # DEBUG
+        loc_delay = 3
         arg_sender = None
         arg_receiver = None
         logging.info("query dellin for shp_id=%d, dl_dt=%s, doc_id=%s", shp_id, dl_dt, doc_id)
@@ -69,6 +70,8 @@ doc_date)\
                 if dl_doc["document_type"] != 'shipping':
                     logging.debug('=== SKIP doc=%s', dl_doc)
                     continue
+                # short delay if found
+                loc_delay = 1
                 tr_num = dl_doc["document_id"]
                 doc_date = dl_doc["create_date"]
                 sz_weight = None
@@ -108,7 +111,7 @@ doc_date)\
                 curs.execute(shp_cmd)
                 app.conn.commit()
 
-        time.sleep(1)
+        time.sleep(loc_delay)
 
     logging.info("SELECT shp.dl_trnum_update();")
     curs.execute("SELECT shp.dl_trnum_update();")
