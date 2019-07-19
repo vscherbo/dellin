@@ -27,7 +27,7 @@ BEGIN
     
     IF err_str IS NOT NULL
     THEN 
-       RAISE 'dl_request_v1 cmd=%^err_str=[%]', cmd, err_str;
+       RAISE 'dl_request_v1 [%]', err_str;
        ret_str := format('%s/%s', ret_str, err_str);
     END IF;
     
