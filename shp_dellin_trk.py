@@ -8,8 +8,12 @@ from datetime import datetime
 import logging
 import argparse
 import time
+import json
 
 import dl_app
+
+OUTSIDE_DELLIN = ("draft", "processing", "pickup", "waiting", "declined")
+
 
 def valid_date(date_str):
     """
@@ -52,28 +56,41 @@ doc_date)\
     curs.execute("SELECT * FROM shp.dl_preorders();")
     rows = curs.fetchall()
     for (shp_id, dl_dt, doc_id) in rows:
-        # DEBUG
         loc_delay = 3
         arg_sender = None
         arg_receiver = None
         logging.info("query dellin for shp_id=%d, dl_dt=%s, doc_id=%s", shp_id, dl_dt, doc_id)
         tracker_res = app.dl.dl_tracker(doc_id=doc_id)
-        #logging.debug('tracker_res=%s', tracker_res)
+        logging.debug('tracker_res=%s', json.dumps(tracker_res, ensure_ascii=False, indent=4))
 
         if tracker_res is None:
             logging.error("dl_tracker res is None")
         elif "errors" in tracker_res.keys():
             logging.error("dl_tracker errors=%s", tracker_res["errors"])
         else:
-            # logging.debug(dl.text)
+            # logging.debug(app.dl.text)
+            if tracker_res['state'] in OUTSIDE_DELLIN:
+                logging.debug('=== SKIP state=%s', tracker_res['state'])
+                continue
+            loc_shipping_doc = None
+            loc_request_doc = None
+            loc_shipping_date = None
+            loc_request_date = None
             for dl_doc in tracker_res["documents"]:
-                if dl_doc["document_type"] != 'shipping':
+                if dl_doc["document_type"] == 'shipping':
+                    loc_shipping_doc = dl_doc["document_id"]
+                    loc_shipping_date = dl_doc["create_date"]
+                elif dl_doc["document_type"] == 'request' and dl_doc["state"] == "processed":
+                    loc_request_doc = dl_doc["full_document_id"]
+                    loc_request_date = dl_doc["produce_date"]
+                else:
                     logging.debug('=== SKIP doc=%s', dl_doc)
                     continue
+            tr_num = loc_shipping_doc or loc_request_doc
+            doc_date = loc_shipping_date or loc_request_date
+            if tr_num:
                 # short delay if found
                 loc_delay = 1
-                tr_num = dl_doc["document_id"]
-                doc_date = dl_doc["create_date"]
                 sz_weight = None
                 sz_volume = None
                 shp_height = None
