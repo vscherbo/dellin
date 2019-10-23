@@ -20,11 +20,12 @@ import dl_app
 
 ERR_REASON = {}
 ERR_REASON['name'] = 'Название'
-ERR_REASON['opf_dl'] = 'ОПФ (организационно-правовая форма) юр.лица по справочнику Деллин'
 ERR_REASON['inn'] = 'ИНН'
-ERR_REASON['street_kladr'] = 'код улицы юр. адреса по КЛАДР'
-ERR_REASON['house'] = 'номер дома юр. адреса'
+ERR_REASON['city_code'] = 'код пункта юр. адреса по КЛАДР'
 ERR_REASON['opf_none'] = 'ОПФ юр.лица по справочнику Деллин или произвольная ОПФ'
+# ERR_REASON['opf_dl'] = 'ОПФ (организационно-правовая форма) юр.лица по справочнику Деллин'
+# ERR_REASON['street_kladr'] = 'код улицы юр. адреса по КЛАДР'
+# ERR_REASON['house'] = 'номер дома юр. адреса'
 
 
 def ca_params_error(params):
@@ -96,7 +97,7 @@ trim(replace("Предприятие", coalesce("Предприятия".opf, ''
 
         # if OK loc_status = 1
         # loc_status = int(bool(opf_dl and name and inn and ret_addr_house))
-        loc_status = int(bool(name and inn))
+        loc_status = int(bool(name and inn and ret_addr_city_code))
                               # and ret_addr_house))
                               # and ret_addr_kladr_street and ret_addr_house))
 
@@ -136,8 +137,8 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
                     err_params.append(ERR_REASON['name'])
                 if inn is None:
                     err_params.append(ERR_REASON['inn'])
-                #if (ret_addr_kladr_street is not None) and (ret_addr_house is None):
-                #    err_params.append(ERR_REASON['house'])
+                if ret_addr_city_code is None:
+                    err_params.append(ERR_REASON['city_code'])
 
             if err_params:
                 print(ca_params_error(err_params), file=sys.stderr, end='',
