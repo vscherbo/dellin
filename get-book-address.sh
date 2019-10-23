@@ -8,7 +8,7 @@
 
 LOG=$(namename "$0")-${1}.log
 
-./get-book-address.py --addr_id "$1" --log_level=INFO --log_to_file=$"LOG"
+./get-book-address.py --addr_id "$1" --log_level=INFO --log_to_file="$LOG"
 
 OP_NAME=load-book-addr
 SQL=sql/${OP_NAME}-${1}.sql
