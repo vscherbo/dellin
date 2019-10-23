@@ -81,7 +81,7 @@ doc_date)\
                     loc_shipping_doc = dl_doc["document_id"]
                     loc_shipping_date = dl_doc["create_date"]
                 elif dl_doc["document_type"] == 'request' and dl_doc["state"] == "processed":
-                    loc_request_doc = dl_doc["full_document_id"]
+                    loc_request_doc = dl_doc["document_id"]
                     loc_request_date = dl_doc["produce_date"]
                 else:
                     logging.debug('=== SKIP doc=%s', dl_doc)
