@@ -19,7 +19,7 @@ for a in $last_a
 do
     logmsg INFO 'Ask contacts for addr='"$a"
     ./get-book-address.sh "$a"
-    sleep 2
+    sleep 4
 done
 
 find . -type f -mtime +10 \( -name 'load-book-addr-*.sql' -o -name 'addr_*.csv' -o -name 'get-book-address-*.log' \) -delete
