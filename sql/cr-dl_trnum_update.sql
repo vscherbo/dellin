@@ -20,11 +20,13 @@ begin
     loop                
         begin
             -- update shp.shipments s set (carr_doc, carr_docdt) = (dl_tr.tracking_code, dl_tr.shipment_dt)
+            loc_status := 1;
             update shp.shipments s set (carr_doc, carr_docdt) = (dl_tr.tracking_code, dl_tr.doc_date)
             where dl_tr.shp_id = s.shp_id;
+            /** since 2019-10-23 because Trigger on shp.shipments created **
             update "Счета" b set ("КодТК", "ДокТК", "ДокТКДата", "Отгружен") = (6, dl_tr.tracking_code, dl_tr.shipment_dt, true)
                 where b."№ счета" in (SELECT sb.bill FROM shp.ship_bills sb WHERE sb.shp_id = dl_tr.shp_id);
-            loc_status := 1;
+            ***/
             EXCEPTION WHEN OTHERS then
                 GET STACKED DIAGNOSTICS
                 loc_RETURNED_SQLSTATE = RETURNED_SQLSTATE,
