@@ -60,7 +60,7 @@ BEGIN
 
     IF err_str IS NOT NULL
     THEN 
-       RAISE 'dl_add_counteragent cmd=%^ret_str=[%]', cmd, ret_str; 
+       RAISE 'dl_add_counteragent cmd=%^err_str=[%]', cmd, err_str; 
     END IF;
     
     return ret_str;
