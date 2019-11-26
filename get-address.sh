@@ -18,4 +18,4 @@ psql -a -U arc_energo -v CA_ID="$1" -f "$SQL" >> "$LOG" 2>&1
 # OR find ./sql -type f -mtime +10 -name load-ca-*-addr.sql -delete
 
 # remove obsolete rotated logs
-find . -type f -mtime +30 -name \"$(namename "$0")*log*.gz\" -ls -delete
+find . -type f -mtime +30 -name "$(namename "$0")*log*.gz" -ls -delete
