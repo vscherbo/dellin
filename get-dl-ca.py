@@ -18,7 +18,7 @@ if app.login(auth=True):
     if 200 == app.dl.status_code:
         logging.info('res_count={}'.format(len(dl_res)))
         with open('res-counteragents.txt', 'w') as of:
-            of.write(app.dl.text.replace('\n', ''))
+            of.write(app.dl.text.replace('\n', '').replace('\\', '\\\\'))
         ret_code = 0
         """
         load into PG with copy-dl-counteragents.sql
