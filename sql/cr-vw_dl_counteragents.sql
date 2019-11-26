@@ -5,7 +5,7 @@ drop view shp.vw_dl_counteragents cascade;
 drop type shp.dl_counteragent cascade;
 create type shp.dl_counteragent as (
 "id" integer,
-"uid" UUID,
+"uid" text,
 "lastUpdate" timestamp,
 "name" varchar,
 "form" varchar,
