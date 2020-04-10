@@ -154,7 +154,7 @@ class DellinAPI():
 
     def dl_orders(self, docid):
         self.payload = self.customers_auth()
-        self.payload["docid"] = docid
+        self.payload["docIds"] = docid
         return self.dl_post(self.url_orders)
 
     def dl_book_counteragents(self):
