@@ -28,4 +28,4 @@ SELECT
         )
     ).*
 from shp.dl_terminals_json)
-SELECT "name" AS city, "cityID", (jsonb_populate_record(null::shp.t_dl_terminals, jsonb_array_elements(terminals->'terminal'))).* FROM dl_city;
+SELECT trim("name") AS city, "cityID", (jsonb_populate_record(null::shp.t_dl_terminals, jsonb_array_elements(terminals->'terminal'))).* FROM dl_city;
