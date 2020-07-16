@@ -22,6 +22,7 @@ class DellinAPI():
     url_calculator = '%s/v1/public/calculator.json' % host
     url_logout = '%s/v1/customers/logout.json' % host
     url_orders = '%s/v2/customers/orders.json' % host
+    url_orders_v3 = '%s/v3/orders.json' % host
     # справочник контрагентов
     url_book_counteragents = '%s/v1/customers/book/counteragents.json' % host
     # наши фирмы, подключённые к ЛК
@@ -156,6 +157,11 @@ class DellinAPI():
         self.payload = self.customers_auth()
         self.payload["docIds"] = docid
         return self.dl_post(self.url_orders)
+
+    def dl_orders_v3(self, docid):
+        self.payload = self.customers_auth()
+        self.payload["docIds"] = docid
+        return self.dl_post(self.url_orders_v3)
 
     def dl_book_counteragents(self):
         self.payload = self.customers_auth()
