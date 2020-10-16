@@ -3,7 +3,7 @@ DROP FUNCTION shp.dl_get_addr_details(integer);
 
 CREATE OR REPLACE FUNCTION shp.dl_get_addr_details(arg_addr_id integer)
  -- RETURNS SETOF RECORD
- RETURNS TABLE(ret_type char, ret_id integer)
+ RETURNS TABLE(ret_type char, ret_id integer, name_phone text, formatted text, addnum text)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path = arc_energo
@@ -49,11 +49,11 @@ begin
         **/
 
         RETURN QUERY SELECT 'C'::char as ret_type,
-        (jsonb_populate_record(NULL::shp.t_dl_contact, jsonb_array_elements(jsonb_array_elements(tmp_addr_contacts_json.jb) -> 'contacts'::text))).id AS ret_id
+        (jsonb_populate_record(NULL::shp.t_dl_contact, jsonb_array_elements(jsonb_array_elements(tmp_addr_contacts_json.jb) -> 'contacts'::text))).*, '', '' -- AS ret_id
         FROM tmp_addr_contacts_json
         UNION
         SELECT 'P'::char,
-        (jsonb_populate_record(NULL::shp.t_dl_phone, jsonb_array_elements(jsonb_array_elements(tmp_addr_contacts_json.jb) -> 'phones'::text))).id
+        (jsonb_populate_record(NULL::shp.t_dl_phone, jsonb_array_elements(jsonb_array_elements(tmp_addr_contacts_json.jb) -> 'phones'::text))).*
         FROM tmp_addr_contacts_json;
 
 
