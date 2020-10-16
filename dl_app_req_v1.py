@@ -33,7 +33,7 @@ def main():
     logging.info("shp_id=%d", shp_id)
     curs.callproc('shp.dl_req_params', [shp_id])
     (sender_id, sender_address_id, receiver_id, receiver_address_id, boxes,
-     wepay, pre_shipdate, delivery_type) = curs.fetchone()
+     wepay, pre_shipdate, delivery_type, is_terminal) = curs.fetchone()
     assert sender_id is not None, 'sender_id не определён'
     assert sender_address_id is not None, 'sender_address_id не определён'
     assert receiver_id is not None, 'receiver_id не определён'
@@ -41,6 +41,7 @@ def main():
     assert boxes is not None, 'boxes не определён'
     assert wepay is not None, 'wepay не определён'
     assert delivery_type in [1, 4, 6, 20, 21], 'delivery_type - недопустимое значение'
+    assert is_terminal is not None, 'is_terminal не определён'
 
     curs.callproc('shp.dl_req_sender_contacts', [shp_id])
     sender_contact_ids = [r[0] for r in curs.fetchall()]
@@ -76,7 +77,7 @@ def main():
     receiver["worktimeEnd"] = "23:59"
 
     # --------------------------------------------
-    # TODO set
+    # TO DO set
     cargo_length = 0.3
     cargo_width = 0.3
     cargo_height = 0.3
@@ -109,6 +110,16 @@ def main():
     request["paymentType"] = 1
     request["deliveryType"] = delivery_type
     request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
+
+    # additionalServices
+    #curs.execute('SELECT is_terminal FROM shp.vw_dl_addresses WHERE id = {}'.format(\
+#receiver_address_id))
+    #is_terminal = curs.fetchone()[0]
+    logging.info('is_terminal=%s', is_terminal)
+    # доставка до двери	1
+    if not is_terminal:
+        request["additionalServices"] = [{'service': 1, 'payer': loc_payer}]
+
     if args.test:
         request["inOrder"] = 0
         loc_status = 2
@@ -125,7 +136,7 @@ def main():
 
     dl_res = app.dl.dl_request_v1(request)
     logging.info('dl.text=%s', app.dl.text)
-    logging.debug('dl_res={}'.format(dl_res))
+    logging.debug('dl_res=%s', dl_res)
     logging.info(json.dumps(dl_res, ensure_ascii=False, indent=4))
     now = datetime.datetime.strftime(datetime.datetime.now(),
                                      '%Y-%m-%d %H:%M:%S')
