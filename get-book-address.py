@@ -48,5 +48,5 @@ if 200 == dl.status_code:
     with open('addr_{}.csv'.format(args.addr_id), 'w') as csv:
         csv.write('{}^"{}"'.format(args.addr_id, json.dumps(dl_res, ensure_ascii=False).replace('"', '""')))
 
-# \copy shp.dl_addr_contacts_json(addr_id, jb) from 'addr.csv' with (format csv, delimiter '^');
+# \copy ext.dl_addr_contacts_json(addr_id, jb) from 'addr.csv' with (format csv, delimiter '^');
         
