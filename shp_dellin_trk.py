@@ -120,13 +120,17 @@ def inn2name(arg_inn):
         counteragent name by INN
         :arg_inn - INN of a counteragent
     """
-    curs_dict = APP.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    inn_sql = curs_dict.mogrify(INN_SQL_TEMPL, (arg_inn,))
-    logging.info('inn_sql=%s', inn_sql)
-    curs_dict.execute(inn_sql)
-    res = curs_dict.fetchone()
-    curs_dict.close()
-    return res.get('name', 'Название по ИНН не найдено')
+    if arg_inn:
+        curs_dict = APP.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        inn_sql = curs_dict.mogrify(INN_SQL_TEMPL, (arg_inn,))
+        logging.info('inn_sql=%s', inn_sql)
+        curs_dict.execute(inn_sql)
+        res = curs_dict.fetchone()
+        curs_dict.close()
+        ret_val = res.get('name', 'Название по ИНН не найдено')
+    else:
+        ret_val = 'arg_inn is None'
+    return ret_val
 
 def inn_msg(dl_inn, pg_inn, arg_role):
     """ Make message about a differnece in INN
@@ -201,37 +205,41 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
         curs_dict.execute(sql_str)
         rec = curs_dict.fetchone()
         curs_dict.close()
-        pg_sender_inn = rec['sender_inn']
-        pg_receiver_inn = rec['receiver_inn']
-        pg_terminal_id = rec['terminal_id']
-        logging.info('pg_sender_inn=%s, pg_receiver_inn=%s, pg_terminal_id=%s',
-                     pg_sender_inn, pg_receiver_inn, pg_terminal_id)
-        body = ""
-        warns = []
-        loc_str = inn_msg(sender_inn, pg_sender_inn, 'sender')
-        if loc_str:
-            warns.append(loc_str)
+        if not rec:
+            logging.warning('PREORDER_SQL returns NULL')
+        else:
+            pg_sender_inn = rec['sender_inn']
+            pg_receiver_inn = rec['receiver_inn']
+            pg_terminal_id = rec['terminal_id']
+            logging.info('pg_sender_inn=%s, pg_receiver_inn=%s, pg_terminal_id=%s',
+                         pg_sender_inn, pg_receiver_inn, pg_terminal_id)
 
-        loc_str = inn_msg(receiver_inn, pg_receiver_inn, 'receiver')
-        if loc_str:
-            warns.append(loc_str)
+            body = ""
+            warns = []
+            loc_str = inn_msg(sender_inn, pg_sender_inn, 'sender')
+            if loc_str:
+                warns.append(loc_str)
 
-        loc_str = terminal_msg(terminal_id, pg_terminal_id, arrival_addr)
-        if loc_str:
-            warns.append(loc_str)
+            loc_str = inn_msg(receiver_inn, pg_receiver_inn, 'receiver')
+            if loc_str:
+                warns.append(loc_str)
 
-        if warns:
-            warns.insert(0, """Выявлены расхождения в отправке (shp_id={})
-между предзаказом {} и фактическим заказом Деллин {}:
-""".format(arg_shp_id, arg_doc_id, arg_tr_num))
-            body = u'\r\n'.join(warns)
-            subj = u'Расхождения между отправкой Деллин {tr_num} \
-и предзаказом {pre_order}'.format(tr_num=arg_tr_num, pre_order=arg_doc_id)
-            logging.info('body=%s', body)
-            to_addr = "vscherbo@kipspb.ru"
-            msg = """{_body}
-Почтовый робот 'АРК Энергосервис'"""
-            send_email(to_addr, subj, msg.format(_body=body))
+            loc_str = terminal_msg(terminal_id, pg_terminal_id, arrival_addr)
+            if loc_str:
+                warns.append(loc_str)
+
+            if warns:
+                warns.insert(0, """Выявлены расхождения в отправке (shp_id={})
+    между предзаказом {} и фактическим заказом Деллин {}:
+    """.format(arg_shp_id, arg_doc_id, arg_tr_num))
+                body = u'\r\n'.join(warns)
+                subj = u'Расхождения между отправкой Деллин {tr_num} \
+    и предзаказом {pre_order}'.format(tr_num=arg_tr_num, pre_order=arg_doc_id)
+                logging.info('body=%s', body)
+                to_addr = "vscherbo@kipspb.ru"
+                msg = """{_body}
+    Почтовый робот 'АРК Энергосервис'"""
+                send_email(to_addr, subj, msg.format(_body=body))
 
 
 ARGS = dl_app.parser.parse_args()
