@@ -82,7 +82,7 @@ def main():
     cargo_width = 0.3
     cargo_height = 0.3
     cargo_weight = 1
-    cargo_total_volume = 0.009
+    cargo_total_volume = cargo_length * cargo_width * cargo_height
     cargo_total_weight = 1
 
     # Request
