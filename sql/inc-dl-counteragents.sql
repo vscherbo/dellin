@@ -26,3 +26,8 @@ DO UPDATE SET
 
 -- DO NOTHING;
 
+delete from ext.dl_counteragents where id in (
+select e.id from ext.dl_counteragents e
+left join shp.vw_dl_counteragents v on e.inn = v.inn
+where v.id is null);
+

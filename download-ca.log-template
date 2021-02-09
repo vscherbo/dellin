@@ -11,3 +11,8 @@
 ^DO UPDATE SET
  = EXCLUDED
 status = 0
+delete from ext.dl_counteragents where id in (
+select e.id from ext.dl_counteragents e
+left join shp.vw_dl_counteragents v on e.inn = v.inn
+where v.id is null);
+^DELETE
