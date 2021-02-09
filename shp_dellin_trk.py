@@ -20,6 +20,9 @@ import psycopg2.extras
 
 import dl_app
 
+# EMAIL_TO = "vscherbo@kipspb.ru"
+EMAIL_TO = "delivery-dl@kipspb.ru"
+
 SHP_CMD_TEMPLATE = """INSERT INTO shp.vs_dl_tracking(\
 tracking_code,\
 shp_id,\
@@ -225,8 +228,10 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
                 warns.append(loc_str)
 
             loc_str = terminal_msg(terminal_id, pg_terminal_id, arrival_addr)
+            """ useless
             if loc_str:
                 warns.append(loc_str)
+            """
 
             if warns:
                 warns.insert(0, """Выявлены расхождения в отправке (shp_id={})
@@ -236,7 +241,7 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
                 subj = u'Расхождения между отправкой Деллин {tr_num} \
     и предзаказом {pre_order}'.format(tr_num=arg_tr_num, pre_order=arg_doc_id)
                 logging.info('body=%s', body)
-                to_addr = "vscherbo@kipspb.ru"
+                to_addr = EMAIL_TO
                 msg = """{_body}
     Почтовый робот 'АРК Энергосервис'"""
                 send_email(to_addr, subj, msg.format(_body=body))
@@ -267,6 +272,7 @@ if APP.login(auth=True):
             (16796, '2020-07-07', '18383875'),
             (16821, '2020-07-07', '18397474')]
     """
+    #ROWS = [(19795, '2020-11-09', '20009486')]
 
     for (shp_id, dl_dt, doc_id) in ROWS:
         loc_delay = 3
