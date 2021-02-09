@@ -110,7 +110,7 @@ doc_date)\
                 curs.execute(shp_cmd)
                 app.conn.commit()
 
-        time.sleep(1)
+        time.sleep(3)
 
     # logging.info("SELECT shp.dl_set_tracking();")
     # curs.execute("SELECT shp.dl_set_tracking();")
