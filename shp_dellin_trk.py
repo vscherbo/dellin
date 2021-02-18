@@ -275,7 +275,7 @@ if APP.login(auth=True):
     #ROWS = [(19795, '2020-11-09', '20009486')]
 
     for (shp_id, dl_dt, doc_id) in ROWS:
-        loc_delay = 3
+        loc_delay = 4
         arg_sender = None
         arg_receiver = None
         logging.info("query dellin for shp_id=%d, dl_dt=%s, doc_id=%s", shp_id, dl_dt, doc_id)
