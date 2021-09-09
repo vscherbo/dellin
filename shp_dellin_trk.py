@@ -209,7 +209,7 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
         rec = curs_dict.fetchone()
         curs_dict.close()
         if not rec:
-            logging.warning('PREORDER_SQL returns NULL')
+            logging.warning('PREORDER_SQL returns NULL shp_id=%s', arg_shp_id)
         else:
             pg_sender_inn = rec['sender_inn']
             pg_receiver_inn = rec['receiver_inn']
@@ -275,7 +275,7 @@ if APP.login(auth=True):
     #ROWS = [(19795, '2020-11-09', '20009486')]
 
     for (shp_id, dl_dt, doc_id) in ROWS:
-        loc_delay = 4
+        loc_delay = 3
         arg_sender = None
         arg_receiver = None
         logging.info("query dellin for shp_id=%d, dl_dt=%s, doc_id=%s", shp_id, dl_dt, doc_id)
@@ -347,7 +347,7 @@ if APP.login(auth=True):
                 CURS.execute(shp_cmd)
                 APP.conn.commit()
 
-                time.sleep(loc_delay + 2)
+                time.sleep(loc_delay + 4)
                 verify_order(doc_id, tr_num, shp_id)
 
         time.sleep(loc_delay)
