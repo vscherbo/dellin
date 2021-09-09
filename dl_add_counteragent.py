@@ -133,11 +133,11 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
             if loc_status == -1:
                 err_params.append(ERR_REASON['opf_none'])
             else:
-                if name is None:
+                if name is None or name == '':
                     err_params.append(ERR_REASON['name'])
-                if inn is None:
+                if inn is None or inn == '':
                     err_params.append(ERR_REASON['inn'])
-                if ret_addr_city_code is None:
+                if ret_addr_city_code is None or ret_addr_city_code == '':
                     err_params.append(ERR_REASON['city_code'])
 
             if err_params:
@@ -159,7 +159,7 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
         jur_address["flat"] = ret_addr_flat
 
         # обработка улицы без кода КЛАДР
-        if ret_addr_kladr_street is None:
+        if ret_addr_kladr_street is None or ret_addr_kladr_street == '':
             custom_street = {}
             custom_street["code"] = ret_addr_city_code.ljust(25, '0')
             custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
