@@ -1,6 +1,6 @@
--- DROP FUNCTION shp.dl_add_counteragent(integer, varchar, varchar, varchar, varchar, boolean);
+-- DROP FUNCTION shp.dl_add_counteragent_free_addr(integer, varchar, varchar, varchar, varchar, boolean);
 
-CREATE OR REPLACE FUNCTION shp.dl_add_counteragent(
+CREATE OR REPLACE FUNCTION shp.dl_add_counteragent_free_addr(
     arg_code integer, -- Предприятия.Код
     arg_addr varchar DEFAULT NULL,
     arg_name varchar DEFAULT NULL,
@@ -17,7 +17,7 @@ DECLARE cmd character varying;
   loc_country_id varchar;
   loc_juridical boolean;
 BEGIN
-    cmd := format('python3 %s/dl_add_counteragent.py --pg_srv=localhost --log_file=%s/dl_add_counteragent.log --conf=%s --code=%s', 
+    cmd := format('python3 %s/dl_add_counteragent_free_addr.py --pg_srv=localhost --log_file=%s/dl_add_counteragent_free_addr.log --conf=%s --code=%s', 
         wrk_dir, -- script dir
         wrk_dir, -- logfile dir
         format('%s/dl.conf', wrk_dir), -- conf file
@@ -52,7 +52,7 @@ BEGIN
 
     IF cmd IS NULL 
     THEN 
-       ret_str := 'dl_add_counteragent cmd IS NULL';
+       ret_str := 'dl_add_counteragent_free_addr cmd IS NULL';
        RAISE '%', ret_str ; 
     END IF;
 
@@ -60,8 +60,7 @@ BEGIN
 
     IF err_str IS NOT NULL
     THEN 
-       RAISE NOTICE 'dl_add_counteragent cmd=%^err_str=[%]', cmd, err_str;
-       ret_str := shp.dl_add_counteragent_free_addr(arg_code, arg_addr, arg_name, arg_form_name, arg_country_name, arg_juridical);
+       RAISE 'dl_add_counteragent_free_addr cmd=%^err_str=[%]', cmd, err_str; 
     END IF;
     
     return ret_str;
