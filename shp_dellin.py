@@ -37,6 +37,8 @@ class DellinAPI():
     url_book_address = '%s/v1/customers/book/address.json' % host
     url_book_counteragents_update = \
         '%s/v1/customers/book/counteragents/update.json' % host
+    url_book_counteragents_update_v2 = \
+        '%s/v2/book/counteragent/update.json' % host
     # добавить или обновить телефон по адресу
     url_phones_update = '%s/v1/customers/book/phones/update.json' % host
     # добавить или обновить контакт по адресу
@@ -290,8 +292,14 @@ class DellinAPI():
         self.payload = params.copy()
         self.payload.update(self.customers_auth())
 
+    def dl_book_ca_update_v2(self, params):
+        """ создание и обновление контрагента
+        """
+        self.payload = params.copy()
+        self.payload.update(self.customers_auth())
+
         if self.session_id:
-            return self.dl_post(self.url_book_counteragents_update)
+            return self.dl_post(self.url_book_counteragents_update_v2)
         else:
             return self.payload
 
