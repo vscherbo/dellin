@@ -37,12 +37,15 @@ class DellinAPI():
     url_book_address = '%s/v1/customers/book/address.json' % host
     url_book_counteragents_update = \
         '%s/v1/customers/book/counteragents/update.json' % host
+    url_book_counteragents_update_v2 = \
+        '%s/v2/book/counteragent/update.json' % host
     # добавить или обновить телефон по адресу
     url_phones_update = '%s/v1/customers/book/phones/update.json' % host
     # добавить или обновить контакт по адресу
     url_contacts_update = '%s/v1/customers/book/contacts/update.json' % host
     # добавить или обновить адрес контрагента
     url_addresses_update = '%s/v1/customers/book/addresses/update.json' % host
+    url_addresses_update_v2 = '%s/v2/book/address/update.json' % host
     url_request = '%s/v1/customers/request.json' % host
     url_request_v2 = '%s/v2/request.json' % host
     url_book_delete = '%s/v1/customers/book/delete.json' % host
@@ -127,6 +130,7 @@ class DellinAPI():
             if self.err_msg:
                 logging.error(self.err_msg)
                 ret = {}
+                ret = resp.json()  # v2 API
                 ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
             elif self.status_code != 200:
                 logging.error("dl_post failed, status_code=%s",
@@ -295,6 +299,17 @@ class DellinAPI():
         else:
             return self.payload
 
+    def dl_book_ca_update_v2(self, params):
+        """ создание и обновление контрагента
+        """
+        self.payload = params.copy()
+        self.payload.update(self.customers_auth())
+
+        if self.session_id:
+            return self.dl_post(self.url_book_counteragents_update_v2)
+        else:
+            return self.payload
+
     def dl_contact_add(self, addr_id, contact_name):
         self.payload = self.customers_auth()
         self.payload.update({"addressID": addr_id})
@@ -332,6 +347,12 @@ class DellinAPI():
         else:
             return self.payload
 
+
+    def dl_address_add_v2(self, ca_id, free_addr):
+        self.payload = self.customers_auth()
+        self.payload.update({"counteragentID": ca_id})
+        self.payload.update({"search": free_addr})
+        return self.dl_post(self.url_addresses_update_v2)
 
     def dl_address_add(self, ca_id, street_kladr, house, building=None,
                        structure=None, flat=None):

@@ -34,7 +34,7 @@ def main():
     #params["counteragentID"] = args.ca_id
     #params["search"] = args.address
     #dl_res = app.dl.dl_address_add_v2(params)
-    dl_res = app.dl.dl_address_add_v2(args.ca_id, args.address)
+    dl_res = app.dl.dl_address_add_v2(args.ca_id, args.address.replace('№', ''))
 
     logging.info('dl_address_add res=%s', dl_res)
 
@@ -53,7 +53,7 @@ ON CONFLICT DO NOTHING;", (args.ca_id, ret_address_id,
         curs.execute(loc_sql)
         app.conn.commit()
     else:
-        err_str = json.dumps(dl_res.json()["errors"], ensure_ascii=False)
+        err_str = json.dumps(dl_res["errors"], ensure_ascii=False)
         logging.error(err_str)
         print(err_str, file=sys.stderr, end='', flush=True)
 
