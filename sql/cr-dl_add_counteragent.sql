@@ -57,11 +57,13 @@ BEGIN
     END IF;
 
     SELECT * FROM public.exec_shell(cmd) INTO ret_str, err_str ;
+    RAISE NOTICE 'dl_add_counteragent cmd=[%]^ret_str=[%]^err_str=[%]', cmd, ret_str, err_str;
 
-    IF err_str IS NOT NULL
+    IF err_str IS NOT NULL AND err_str <> ''
     THEN 
        RAISE NOTICE 'dl_add_counteragent cmd=%^err_str=[%]', cmd, err_str;
        ret_str := shp.dl_add_counteragent_free_addr(arg_code, arg_addr, arg_name, arg_form_name, arg_country_name, arg_juridical);
+       err_str := NULL;
     END IF;
     
     return ret_str;

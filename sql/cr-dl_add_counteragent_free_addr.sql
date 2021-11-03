@@ -58,7 +58,7 @@ BEGIN
 
     SELECT * FROM public.exec_shell(cmd) INTO ret_str, err_str ;
 
-    IF err_str IS NOT NULL
+    IF err_str IS NOT NULL AND err_str <> ''
     THEN 
        RAISE 'dl_add_counteragent_free_addr cmd=%^err_str=[%]', cmd, err_str; 
     END IF;

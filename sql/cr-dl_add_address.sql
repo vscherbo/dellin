@@ -27,7 +27,9 @@ BEGIN
     
     IF err_str IS NOT NULL
     THEN 
-       RAISE 'dl_add_address cmd=%^err_str=[%]', cmd, err_str; 
+       RAISE NOTICE 'dl_add_address cmd=%^err_str=[%]', cmd, err_str; 
+       ret_str := shp.dl_add_address_free(arg_ca_id, arg_address);
+       err_str := NULL;
     END IF;
     
     return ret_str;
