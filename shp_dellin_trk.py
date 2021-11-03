@@ -198,24 +198,27 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
         sender_inn = dl_res["orders"][0]['sender'].get('inn', 'empty')
         receiver_inn = dl_res["orders"][0]['receiver'].get('inn', 'empty')
         terminal_id = dl_res["orders"][0]['arrival'].get('terminalId', 'empty')
-        arrival_addr = dl_res["orders"][0]['arrival'].get('address', 'empty')
+        #arrival_addr = dl_res["orders"][0]['arrival'].get('address', 'empty')
         logging.info('sender_inn=%s, receiver_inn=%s, terminal_id=%s',
                      sender_inn, receiver_inn, terminal_id)
 
         curs_dict = APP.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        sql_str = curs_dict.mogrify(PREORDER_SQL, (arg_shp_id,))
-        logging.info('sql_str=%s', sql_str)
-        curs_dict.execute(sql_str)
+        #sql_str = curs_dict.mogrify(PREORDER_SQL, (arg_shp_id,))
+        #logging.info('sql_str=%s', sql_str)
+        #curs_dict.execute(sql_str)
+        curs_dict.callproc('shp.dl_snd_rcv_inn', [arg_shp_id])
         rec = curs_dict.fetchone()
         curs_dict.close()
         if not rec:
-            logging.warning('PREORDER_SQL returns NULL shp_id=%s', arg_shp_id)
+            logging.warning('shp.dl_snd_rcv_inn returns NULL shp_id=%s', arg_shp_id)
         else:
             pg_sender_inn = rec['sender_inn']
             pg_receiver_inn = rec['receiver_inn']
-            pg_terminal_id = rec['terminal_id']
-            logging.info('pg_sender_inn=%s, pg_receiver_inn=%s, pg_terminal_id=%s',
-                         pg_sender_inn, pg_receiver_inn, pg_terminal_id)
+            logging.info('pg_sender_inn=%s, pg_receiver_inn=%s',
+                         pg_sender_inn, pg_receiver_inn)
+            #pg_terminal_id = rec['terminal_id']
+            #logging.info('pg_sender_inn=%s, pg_receiver_inn=%s, pg_terminal_id=%s',
+            #             pg_sender_inn, pg_receiver_inn, pg_terminal_id)
 
             body = ""
             warns = []
@@ -227,8 +230,8 @@ def verify_order(arg_doc_id, arg_tr_num, arg_shp_id):
             if loc_str:
                 warns.append(loc_str)
 
-            loc_str = terminal_msg(terminal_id, pg_terminal_id, arrival_addr)
             """ useless
+            loc_str = terminal_msg(terminal_id, pg_terminal_id, arrival_addr)
             if loc_str:
                 warns.append(loc_str)
             """
