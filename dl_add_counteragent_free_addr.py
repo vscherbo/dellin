@@ -124,7 +124,7 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
         return
 
     params = {}
-    params["name"] = name
+    params["name"] = name.replace('"', '')
     params["inn"] = inn
     if opf_dl:
         params["form"] = opf_dl
