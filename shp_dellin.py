@@ -130,8 +130,10 @@ class DellinAPI():
             if self.err_msg:
                 logging.error(self.err_msg)
                 ret = {}
-                if resp:
+                if resp is not None:
+                    logging.debug(resp.json())
                     ret = resp.json()  # v2 API
+
                 ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
             elif self.status_code != 200:
                 logging.error("dl_post failed, status_code=%s",
