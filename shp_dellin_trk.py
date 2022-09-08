@@ -123,7 +123,7 @@ def inn2name(arg_inn):
         counteragent name by INN
         :arg_inn - INN of a counteragent
     """
-    if arg_inn:
+    if arg_inn is not None:
         curs_dict = APP.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         inn_sql = curs_dict.mogrify(INN_SQL_TEMPL, (arg_inn,))
         logging.info('inn_sql=%s', inn_sql)
