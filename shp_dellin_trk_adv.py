@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 import argparse
 import time
+import json
 
 import dl_app
 
@@ -35,7 +36,7 @@ dl_app.parser.add_argument("--finish_date",
 args = dl_app.parser.parse_args()
 
 app = dl_app.DL_app(args=args, description='DL advanced tracking')
-logging.info("args={}".format(args))
+logging.info("args=%s", args)
 
 if app.login(auth=True):
     app.db_login()
@@ -75,9 +76,9 @@ doc_date)\
 
         if tracker_res is None:
             logging.error("dl_tracker_adv res is None")
-        elif tracker_res["errormsg"] != "":
-            logging.error("dl_tracker_adv errormsg={}".format(tracker_res["errormsg"]))
-        else:
+        elif tracker_res.get("errormsg", "") != "":
+            logging.error("dl_tracker_adv errormsg=%s", tracker_res["errormsg"])
+        elif "orders" in tracker_res:
             # logging.debug(dl.text)
             # logging.info(tracker_res["orders"]["tracker"][0]["order"]['docNumber'])
             for dl_order in tracker_res["orders"]["tracker"]:
@@ -90,7 +91,7 @@ doc_date)\
                 shp_length = dl_order["order"]["length"]
                 osz_weight = dl_order["order"]["oversizedWeight"]
                 osz_volume = dl_order["order"]["oversizedVolume"]
-                logging.debug('got order={} for shp_id={}'.format(dl_order["order"], shp_id))
+                logging.debug('got order=%s for shp_id=%d', dl_order["order"], shp_id)
                 shp_cmd = curs.mogrify(shp_cmd_template,
                                        (tr_num,
                                         shp_id,\
@@ -109,6 +110,9 @@ doc_date)\
                 logging.info(shp_cmd)
                 curs.execute(shp_cmd)
                 app.conn.commit()
+        else:
+            logging.warning("dl_tracker_adv unexpected tracker_res=%s",
+                            json.dumps(tracker_res, ensure_ascii=False, indent=4))
 
         time.sleep(3)
 

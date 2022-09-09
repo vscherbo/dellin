@@ -287,9 +287,9 @@ if APP.login(auth=True):
 
         if tracker_res is None:
             logging.error("dl_tracker res is None")
-        elif "errors" in tracker_res.keys():
+        elif "errors" in tracker_res:
             logging.error("dl_tracker errors=%s", tracker_res["errors"])
-        else:
+        elif "state" in tracker_res:
             # logging.debug(APP.dl.text)
             if tracker_res['state'] in OUTSIDE_DELLIN:
                 logging.debug('=== SKIP state=%s', tracker_res['state'])
@@ -352,6 +352,9 @@ if APP.login(auth=True):
 
                 time.sleep(loc_delay + 4)
                 verify_order(doc_id, tr_num, shp_id)
+        else:
+            logging.warning("dl_tracker unexpected tracker_res=%s",
+                            json.dumps(tracker_res, ensure_ascii=False, indent=4))
 
         time.sleep(loc_delay)
 
