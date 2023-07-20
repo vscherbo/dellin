@@ -20,8 +20,8 @@ import psycopg2.extras
 
 import dl_app
 
-# EMAIL_TO = "vscherbo@kipspb.ru"
-EMAIL_TO = "delivery-dl@kipspb.ru"
+EMAIL_TO = "vscherbo@kipspb.ru"
+#EMAIL_TO = "delivery-dl@kipspb.ru"
 
 SHP_CMD_TEMPLATE = """INSERT INTO shp.vs_dl_tracking(\
 tracking_code,\
@@ -68,7 +68,7 @@ def valid_date(date_str):
 def send_email(arg_to, arg_subj, arg_msg):
     """Just send"""
 
-    smtp_srv = "smtp.yandex.ru"
+    smtp_srv = "smtp.mail.ru"
     port = 465
     _from = 'no-reply@kipspb.ru'
     # subject = u'Расхождения в отправке  Деллин и предзаказе'
@@ -98,7 +98,7 @@ def send_email(arg_to, arg_subj, arg_msg):
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_srv, port, context=context) as smtp_obj:
-            smtp_obj.login('no-reply@kipspb.ru', 'Never-adm1n')
+            smtp_obj.login('no-reply@kipspb.ru', 'Rkx2iXXcmrqK1E6Licdg')
 
             #smtp_obj.set_debuglevel(True)
             rcpt_refused = smtp_obj.send_message(msg)
@@ -281,6 +281,8 @@ if APP.login(auth=True):
         loc_delay = 3
         arg_sender = None
         arg_receiver = None
+        logging.info("sleep before next loop loc_delay=%s", loc_delay)
+        time.sleep(loc_delay)
         logging.info("query dellin for shp_id=%d, dl_dt=%s, doc_id=%s", shp_id, dl_dt, doc_id)
         tracker_res = APP.dl.dl_tracker(doc_id=doc_id)
         #logging.debug('tracker_res=%s', json.dumps(tracker_res, ensure_ascii=False, indent=4))
@@ -312,7 +314,7 @@ if APP.login(auth=True):
             doc_date = loc_shipping_date or loc_request_date
             if tr_num:
                 # short delay if found
-                loc_delay = 1
+                #loc_delay = 1
                 sz_weight = None
                 sz_volume = None
                 shp_height = None
@@ -320,16 +322,6 @@ if APP.login(auth=True):
                 shp_length = None
                 osz_weight = None
                 osz_volume = None
-                """
-                sz_weight = dl_doc["order"]["sizedWeight"]
-                sz_volume = dl_doc["order"]["sizedVolume"]
-                doc_date = dl_doc["order"]["docDate"].replace('T', ' ')
-                shp_height = dl_doc["order"]["height"]
-                shp_width = dl_doc["order"]["width"]
-                shp_length = dl_doc["order"]["length"]
-                osz_weight = dl_doc["order"]["oversizedWeight"]
-                osz_volume = dl_doc["order"]["oversizedVolume"]
-                """
                 logging.debug('got tr_num=%s, doc_date=%s for shp_id=%d', tr_num, doc_date, shp_id)
                 shp_cmd = CURS.mogrify(SHP_CMD_TEMPLATE,
                                        (tr_num,
@@ -349,14 +341,14 @@ if APP.login(auth=True):
                 logging.info(shp_cmd)
                 CURS.execute(shp_cmd)
                 APP.conn.commit()
-
-                time.sleep(loc_delay + 4)
                 verify_order(doc_id, tr_num, shp_id)
+
+            logging.info("got tracker_res. sleep loc_delay=%s", loc_delay)
+            time.sleep(loc_delay)
         else:
             logging.warning("dl_tracker unexpected tracker_res=%s",
                             json.dumps(tracker_res, ensure_ascii=False, indent=4))
 
-        time.sleep(loc_delay)
 
     logging.info("SELECT shp.dl_trnum_update();")
     CURS.execute("SELECT shp.dl_trnum_update();")
