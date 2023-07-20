@@ -116,7 +116,7 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
             if inn is None or inn == '':
                 err_params.append(ERR_REASON['inn'])
             if legal_addr is None or legal_addr == '':
-                err_params.append(ERR_REASON['empty_addr'])
+                err_params.append(ERR_REASON['legal_addr'])
 
         if err_params:
             print(ca_params_error(err_params), file=sys.stderr, end='',
