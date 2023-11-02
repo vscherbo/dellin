@@ -49,6 +49,7 @@ class DellinAPI():
     url_request = '%s/v1/customers/request.json' % host
     url_request_v2 = '%s/v2/request.json' % host
     url_book_delete = '%s/v1/customers/book/delete.json' % host
+    url_printable = '%s//v1/printable.json' % host
     # headers = {'Content-type': 'application/javascript'}
     headers = {'Content-type': 'application/json'}
 
@@ -442,6 +443,12 @@ class DellinAPI():
             self.payload.update({"contacts": cont_ids})
         # return self.payload
         return self.dl_post(self.url_book_delete)
+
+    def dl_printable(self, doc_uid):
+        self.payload = self.customers_auth()
+        self.payload.update({"docuid": doc_uid})
+        self.payload.update({"order": "bill"})
+        return self.dl_post(self.url_printable)
 
     def dl_logout(self):
         self.payload = self.customers_auth()
