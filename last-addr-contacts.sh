@@ -23,4 +23,5 @@ do
 done
 
 find . -type f -mtime +10 \( -name 'load-book-addr-*.sql' -o -name 'addr_*.csv' -o -name 'get-book-address-*.log' \) -delete
+find "$PGDATA" -type f -mtime +10 -o -name 'addr_*.csv' -delete
 
