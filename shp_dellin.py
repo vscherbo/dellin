@@ -113,6 +113,8 @@ class DellinAPI():
             self.err_msg = None
             logging.debug("status_code=%s", resp.status_code)
             resp.raise_for_status()
+        except TypeError as exc:
+            self.err_msg = self.__exception_fmt__('TypeError', exc)
         except requests.exceptions.Timeout as exc:
             # Maybe set up for a retry, or continue in a retry loop
             self.err_msg = self.__exception_fmt__('Timeout', exc)
@@ -124,6 +126,9 @@ class DellinAPI():
         except requests.exceptions.RequestException as exc:
             # catastrophic error. bail.
             self.err_msg = self.__exception_fmt__('RequestException', exc)
+        except Exception as exc:
+            # catastrophic error. bail.
+            self.err_msg = self.__exception_fmt__('other Exception', exc)
         else:
             ret = resp.json()
             # logging.debug("r.text=%s", r.text)
