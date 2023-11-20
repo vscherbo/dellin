@@ -40,7 +40,8 @@ begin
         create temporary table if not exists tmp_addr_contacts_json (like ext.dl_addr_contacts_json);
         truncate table tmp_addr_contacts_json;
         copy_cmd := format ('COPY tmp_addr_contacts_json(addr_id, jb) FROM %L (FORMAT CSV, DELIMITER "^")'
-           , format('addr_%s.csv', arg_addr_id));
+            , format('%s/addr_%s.csv', wrk_dir, arg_addr_id));
+            -- , format('addr_%s.csv', arg_addr_id));
         -- RAISE NOTICE 'copy_cmd=%', copy_cmd;
         EXECUTE copy_cmd;
         /**
