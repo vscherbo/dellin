@@ -300,13 +300,16 @@ if APP.login(auth=True):
             loc_request_doc = None
             loc_shipping_date = None
             loc_request_date = None
+            loc_doc_type = None
             for dl_doc in tracker_res["documents"]:
                 if dl_doc["document_type"] == 'shipping':
                     loc_shipping_doc = dl_doc["document_id"]
                     loc_shipping_date = dl_doc["create_date"]
+                    loc_doc_type = dl_doc["document_type"]
                 elif dl_doc["document_type"] == 'request' and dl_doc["state"] == "processed":
                     loc_request_doc = dl_doc["document_id"]
                     loc_request_date = dl_doc["produce_date"]
+                    loc_doc_type = dl_doc["document_type"]
                 else:
                     logging.debug('=== SKIP doc=%s', dl_doc)
                     continue
@@ -322,7 +325,8 @@ if APP.login(auth=True):
                 shp_length = None
                 osz_weight = None
                 osz_volume = None
-                logging.debug('got tr_num=%s, doc_date=%s for shp_id=%d', tr_num, doc_date, shp_id)
+                logging.info('got tr_num=%s, doc_type=%s, doc_date=%s for shp_id=%d',
+                             tr_num, loc_doc_type, doc_date, shp_id)
                 shp_cmd = CURS.mogrify(SHP_CMD_TEMPLATE,
                                        (tr_num,
                                         shp_id,\
