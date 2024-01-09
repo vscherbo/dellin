@@ -38,7 +38,50 @@ oversized_weight,\
 oversized_volume,\
 doc_date)\
  VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\
- ON CONFLICT DO NOTHING;"""
+ON CONFLICT (tracking_code)
+DO UPDATE SET
+tracking_code = EXCLUDED.tracking_code,\
+shp_id  = EXCLUDED.shp_id,\
+shipment_dt  = EXCLUDED.shipment_dt,\
+src_inn = EXCLUDED.src_inn,\
+dst_inn = EXCLUDED.dst_inn,\
+sized_weight = EXCLUDED.sized_weight,\
+sized_volume = EXCLUDED.sized_volume,\
+shp_height = EXCLUDED.shp_height,\
+shp_width = EXCLUDED.shp_width,\
+shp_length = EXCLUDED.shp_length,\
+oversized_weight = EXCLUDED.oversized_weight,\
+oversized_volume = EXCLUDED.oversized_volume,\
+doc_date = EXCLUDED.doc_date\
+;
+"""
+
+"""
+ON CONFLICT (tracking_code)
+DO UPDATE SET
+tracking_code = EXCLUDED.tracking_code,\
+shp_id  = EXCLUDED.shp_id,\
+shipment_dt  = EXCLUDED.shipment_dt,\
+src_inn = EXCLUDED.src_inn,\
+dst_inn = EXCLUDED.dst_inn,\
+sized_weight = EXCLUDED.sized_weight,\
+sized_volume = EXCLUDED.sized_volume,\
+shp_height = EXCLUDED.shp_height,\
+shp_width = EXCLUDED.shp_width,\
+shp_length = EXCLUDED.shp_length,\
+oversized_weight = EXCLUDED.oversized_weight,\
+oversized_volume = EXCLUDED.oversized_volume,\
+doc_date = EXCLUDED.doc_date\
+;
+"""
+
+# ON CONFLICT DO NOTHING;"""
+
+""" just example
+ON CONFLICT (id)
+DO UPDATE SET
+    uid = EXCLUDED.uid;
+"""
 
 OUTSIDE_DELLIN = ("draft", "processing", "pickup", "waiting", "declined")
 
@@ -275,7 +318,8 @@ if APP.login(auth=True):
             (16796, '2020-07-07', '18383875'),
             (16821, '2020-07-07', '18397474')]
     """
-    #ROWS = [(19795, '2020-11-09', '20009486')]
+    #ROWS = [(49333, '2023-11-17', '40059971')]
+    #ROWS = [(49323, '2023-11-17', '40054461')]
 
     for (shp_id, dl_dt, doc_id) in ROWS:
         loc_delay = 3
