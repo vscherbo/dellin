@@ -51,7 +51,8 @@ class DellinAPI():
     url_book_delete = '%s/v1/customers/book/delete.json' % host
     url_printable = '%s//v1/printable.json' % host
     # headers = {'Content-type': 'application/javascript'}
-    headers = {'Content-type': 'application/json'}
+    # headers = {'Content-type': 'application/json'}
+    headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
 
     def __init__(self, app_key, login=None, password=None):
         logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -137,8 +138,14 @@ class DellinAPI():
                 logging.error(self.err_msg)
                 ret = {}
                 if resp is not None:
-                    logging.debug(resp.json())
-                    ret = resp.json()  # v2 API
+                    try:
+                        ret = resp.json()  # v2 API
+                        logging.error(resp.json())
+                    #except requests.exceptions.JSONDecodeError:
+                    except:
+                        logging.error(resp.text)
+                        #ret = resp  # ??? .text
+                        ret = {}
 
                 ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
             elif self.status_code != 200:
