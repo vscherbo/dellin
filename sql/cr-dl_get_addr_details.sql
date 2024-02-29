@@ -29,7 +29,7 @@ begin
     END IF;
 
     -- RAISE NOTICE 'cmd=%', cmd;
-    SELECT * FROM public.exec_shell(cmd) INTO ret_str, err_str ;
+    SELECT * FROM public.exec_shell(cmd, wrk_dir) INTO ret_str, err_str ;
     -- RAISE NOTICE 'ret_str=%, err_str=%', ret_str, err_str;
     
     IF err_str IS NOT NULL
