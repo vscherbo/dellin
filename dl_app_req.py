@@ -155,7 +155,7 @@ cargo = {
     "totalVolume": cargo_totalVolume,
     "totalWeight": cargo_totalWeight,
     "insurance": insurance,
-    "freightName": 'Приборы'
+    "freightName": 'Комплектующие'
 }
 
 
