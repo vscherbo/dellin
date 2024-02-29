@@ -42,6 +42,7 @@ def main():
     assert wepay is not None, 'wepay не определён'
     assert delivery_type in [1, 4, 6, 20, 21], 'delivery_type - недопустимое значение'
     assert is_terminal is not None, 'is_terminal не определён'
+    assert pre_shipdate is not None, 'pre_shipdate не определён'
 
     curs.callproc('shp.dl_req_sender_contacts', [shp_id])
     sender_contact_ids = [r[0] for r in curs.fetchall()]
