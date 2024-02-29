@@ -25,6 +25,7 @@ class DellinAPI():
     url_orders_v3 = '%s/v3/orders.json' % host
     # справочник контрагентов
     url_book_counteragents = '%s/v1/customers/book/counteragents.json' % host
+    url_book_counteragents_v2 = '%s/v2/book/counteragents.json' % host
     # наши фирмы, подключённые к ЛК
     url_counteragents = '%s/v1/customers/counteragents.json' % host
     # список адресов контрагента
@@ -182,6 +183,21 @@ class DellinAPI():
         self.payload = self.customers_auth()
         self.payload["docIds"] = docid
         return self.dl_post(self.url_orders_v3)
+
+    def dl_book_counteragents_v2(self, ca_id):
+        self.payload = self.customers_auth()
+        self.payload["counteragentIds"] = [ca_id]
+        return self.dl_post(self.url_book_counteragents_v2)
+
+    def dl_book_counteragents_list(self, ca_ids):
+        self.payload = self.customers_auth()
+        self.payload["counteragentIds"] = ca_ids
+        return self.dl_post(self.url_book_counteragents_v2)
+
+    def dl_book_counteragents_full(self):
+        self.payload = self.customers_auth()
+        #self.payload["counteragentIds"] = ca_ids
+        return self.dl_post(self.url_book_counteragents_v2)
 
     def dl_book_counteragents(self):
         self.payload = self.customers_auth()
