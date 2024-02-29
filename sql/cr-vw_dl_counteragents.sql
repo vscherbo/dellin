@@ -49,5 +49,5 @@ SELECT (jsonb_populate_record(NULL::shp.dl_counteragent, jsonb_array_elements(dl
            FROM ext.dl_counteragents_json) cnta;
 
 
-\i sql/cr-vw_dl_addr_contact_ext.sql
-\i sql/cr-vw_dl_addr_phone_ext.sql
+\i cr-vw_dl_addr_contact_ext.sql
+\i cr-vw_dl_addr_phone_ext.sql
