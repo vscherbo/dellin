@@ -141,7 +141,7 @@ def send_email(arg_to, arg_subj, arg_msg):
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_srv, port, context=context) as smtp_obj:
-            smtp_obj.login('no-reply@kipspb.ru', 'Rkx2iXXcmrqK1E6Licdg')
+            smtp_obj.login('no-reply@kipspb.ru', 'y4QnZjVhJGnNtb0qsAsR')
 
             #smtp_obj.set_debuglevel(True)
             rcpt_refused = smtp_obj.send_message(msg)
