@@ -50,7 +50,9 @@ class DellinAPI():
     url_request = '%s/v1/customers/request.json' % host
     url_request_v2 = '%s/v2/request.json' % host
     url_book_delete = '%s/v1/customers/book/delete.json' % host
-    url_printable = '%s//v1/printable.json' % host
+    url_printable = '%s/v1/printable.json' % host
+    url_labels = '%s/v2/request/cargo/shipment_labels.json' % host
+    url_get_labels = '%s/v2/request/cargo/shipment_labels/get.json' % host
     # headers = {'Content-type': 'application/javascript'}
     # headers = {'Content-type': 'application/json'}
     headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
@@ -133,7 +135,7 @@ class DellinAPI():
             self.err_msg = self.__exception_fmt__('other Exception', exc)
         else:
             ret = resp.json()
-            # logging.debug("r.text=%s", r.text)
+            #logging.debug("resp.text=%s", resp.text)
         finally:
             if self.err_msg:
                 logging.error(self.err_msg)
@@ -477,6 +479,17 @@ class DellinAPI():
         self.payload.update({"docuid": doc_uid})
         self.payload.update({"order": "bill"})
         return self.dl_post(self.url_printable)
+
+    def dl_labels(self, order_id):
+        self.payload = self.customers_auth()
+        self.payload.update({"orderID": order_id})
+        self.payload.update({"cargoPlaces": [{"cargoPlace": "", "amount": 1}] })
+        return self.dl_post(self.url_labels)
+
+    def dl_get_labels(self, order_id):
+        self.payload = self.customers_auth()
+        self.payload.update({"orderID": order_id})
+        return self.dl_post(self.url_get_labels)
 
     def dl_logout(self):
         self.payload = self.customers_auth()
