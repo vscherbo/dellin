@@ -37,13 +37,14 @@ class Member:
     ca_id: int
     addr_id: int
     contact_ids: []
-    phones_ids: []
+    phone_ids: []
 
 @dataclasses.dataclass
 class ReqParams:
     """ DL request's params """
-    sender: Member
-    receiver: Member
+    #sender: Member
+    #receiver: Member
+    members: {}
     boxes: int
     wepay: bool
     pre_shipdate: datetime.date
@@ -52,6 +53,11 @@ class ReqParams:
 
 class DLreq(dl_app.DL_app, log_app.LogApp):
     """ Class for requests v2 """
+    pg_get_ids = {'sender_contact': 'shp.dl_req_sender_contacts',
+                  'receiver_contact': 'shp.dl_req_receiver_contacts',
+                  'sender_phone': 'shp.dl_req_sender_phones',
+                  'receiver_phone': 'shp.dl_req_receiver_phones'
+                  }
 
     def __init__(self, args, description):
         print('init1::', args)
@@ -83,57 +89,54 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         loc_sender = Member(
             ca_id=rec["snd_ca_id"],
             addr_id=rec["snd_addr_id"],
-            contact_ids=[],
-            phones_ids=[]
+            contact_ids=self._get_ids('sender_contact'),
+            phone_ids=self._get_ids('sender_phone')
             )
         loc_receiver = Member(
             ca_id=rec["rcv_ca_id"],
             addr_id=rec["rcv_addr_id"],
-            contact_ids=[],
-            phones_ids=[]
+            contact_ids=self._get_ids('receiver_contact'),
+            phone_ids=self._get_ids('receiver_phone')
             )
         self._req_params = ReqParams(
-            sender=loc_sender,
-            receiver=loc_receiver,
-            wepay=False,
-            boxes=1,
-            pre_shipdate=None,
-            delivery_type=None,
-            is_terminal=False
+            #sender=loc_sender,
+            #receiver=loc_receiver,
+            members= {"sender": loc_sender, "receiver": loc_receiver},
+            #members["sender"]=loc_sender,
+            wepay=rec["wepay"],
+            boxes=rec["boxes"],
+            pre_shipdate=rec["pre_shipdate"],
+            delivery_type=rec["delivery_type"],
+            is_terminal=rec["is_terminal"]
                 )
-        """
-        self._req_params["sender_id"] = rec["snd_ca_id"]
-        self._req_params["snd_addr_id"] = None
-        self._req_params["rcv_ca_id"] = None
-        self._req_params["rcv_addr_id"] = None
-        self._req_params["boxes"] = None
-        self._req_params["wepay"] = None
-        self._req_params["pre_shipdate"] = None
-        self._req_params["delivery_type"] = None
-        self._req_params["is_terminal"] = None
-        """
 
-    def _sender(self):
-        """ Sender """
-        self.pgdb.curs_dict.callproc('dl_req2_member', (self.shp_id, 'sender',))
-        rec = self.pgdb.curs_dict.fetchone()
-        logging.info('rec=%s', rec)
-        sender_id = rec["ca_id"]
-        sender_contact_id = rec["contact_ids"]
-        sender = {
-            "counteragentID" : sender_id,
-            "contactIDs": sender_contact_id,
-            "phoneIDs": rec["phone_ids"]
+    def _get_ids(self, mode):
+        """ Get ids IDs from DB """
+        self.pgdb.curs_dict.callproc(self.pg_get_ids[mode], (self.shp_id,))
+        res = self.pgdb.curs_dict.fetchall()
+        logging.info('res=%s', res)
+        loc_ids = []
+        for rec in res:
+            loc_ids.append(rec[0])
+        logging.info('mode=%s, loc_ids=%s', mode, loc_ids)
+        return loc_ids
+
+    def _member(self, role):
+        """ Member """
+        member = {
+            "counteragentID": self._req_params.members[role].ca_id,
+            "contactIDs": self._req_params.members[role].contact_ids,
+            "phoneIDs": self._req_params.members[role].phone_ids
         }
-        logging.info(sender)
-        return sender
-
+        logging.info('role=%s, member=%s', role, member)
+        return member
 
     def req(self, shp_id):
         """ Do request v2 """
         self.shp_id = shp_id
         self._get_req_params()
-        #self._sender()
+        self._member('sender')
+        self._member('receiver')
 
 
 def main():
