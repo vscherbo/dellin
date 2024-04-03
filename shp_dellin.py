@@ -3,8 +3,8 @@
 """
 Base class for api.dellin.ru
 """
-import logging
 import json
+import logging
 import re
 
 import requests
@@ -263,6 +263,7 @@ class DellinAPI():
             return self.payload
 
     def dl_request_v2(self, params):
+        """ Do request via API v2 """
         self.payload = params.copy()
         self.payload.update(self.customers_auth())
         # data = params.copy()
@@ -270,9 +271,10 @@ class DellinAPI():
         # logging.info('data=%s'.format(data))
 
         if self.session_id:
-            return self.dl_post(self.url_request_v2)
+            res = self.dl_post(self.url_request_v2)
         else:
-            return self.payload
+            res = self.payload
+        return res
 
     def dl_request(self, arc_shipment_id):
         self.payload = self.customers_auth()
