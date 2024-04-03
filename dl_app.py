@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-import sys
-import logging
 import argparse
 import configparser
+import logging
+import sys
+
 import psycopg2
+
 from shp_dellin import DellinAPI
+
 
 class DL_app(object):
     log_format = '[%(filename)-21s:%(lineno)4s - %(funcName)20s()] %(levelname)-7s | %(asctime)-15s | %(message)s'
