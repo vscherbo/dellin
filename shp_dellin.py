@@ -69,25 +69,25 @@ class DellinAPI():
         if login and password:
             assert isinstance(login, str)
             assert isinstance(password, str)
-            self.auth(login, password)
+            self._auth(login, password)
 
-    def auth(self, login, password):
+    def _auth(self, login, password):
         self.payload = {'login': login,
                         'password': password}
-        self.payload.update(self.public_auth())
-        resp = self.dl_post(self.url_login)
+        self.payload.update(self._public_auth())
+        resp = self._dl_post(self.url_login)
         if resp is not None and 'sessionID' in resp.keys():
             self.session_id = resp['sessionID']
         else:
             self.status_code = -1
 
 
-    def public_auth(self):
+    def _public_auth(self):
         return {
             'appKey': self.app_key,
         }
 
-    def customers_auth(self):
+    def _customers_auth(self):
         return {
             'appKey': self.app_key,
             'sessionID': self.session_id,
@@ -97,7 +97,7 @@ class DellinAPI():
     def __exception_fmt__(tag, exception):
         return '{0} msg={1}'.format(tag, str(exception).encode('utf-8'))
 
-    def dl_post(self, post_url):
+    def _dl_post(self, post_url):
         """ POST an request to api.dellin.ru
             Args:
                 post_url - URL on api.dellin.ru
@@ -111,6 +111,7 @@ class DellinAPI():
             loc_data))
         try:
             resp = requests.post(post_url,
+                                 timeout=10,
                                  json=self.payload,
                                  headers=self.headers)
             self.status_code = resp.status_code
@@ -152,7 +153,7 @@ class DellinAPI():
 
                 ret["answer"] = {'state': 'exception', 'err_msg': self.err_msg}
             elif self.status_code != 200:
-                logging.error("dl_post failed, status_code=%s",
+                logging.error("_dl_post failed, status_code=%s",
                               self.status_code)
 
             if resp is not None:
@@ -163,82 +164,82 @@ class DellinAPI():
         return ret
 
     def dl_tracker(self, doc_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["docid"] = doc_id
-        return self.dl_post(self.url_tracker)
+        return self._dl_post(self.url_tracker)
 
 
     def dl_tracker_adv(self, sender, receiver, date_start, date_end):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["sender"] = {"inn": sender}
         self.payload["receiver"] = {"inn": receiver}
         self.payload["date_start"] = date_start  # "2017-10-19"
         self.payload["date_end"] = date_end  # "2017-10-19"
-        return self.dl_post(self.url_tracker_adv)
+        return self._dl_post(self.url_tracker_adv)
 
     def dl_orders(self, docid):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["docIds"] = docid
-        return self.dl_post(self.url_orders)
+        return self._dl_post(self.url_orders)
 
     def dl_orders_v3(self, docid):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["docIds"] = docid
-        return self.dl_post(self.url_orders_v3)
+        return self._dl_post(self.url_orders_v3)
 
     def dl_book_counteragents_v2(self, ca_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["counteragentIds"] = [ca_id]
-        return self.dl_post(self.url_book_counteragents_v2)
+        return self._dl_post(self.url_book_counteragents_v2)
 
     def dl_book_counteragents_list(self, ca_ids):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["counteragentIds"] = ca_ids
-        return self.dl_post(self.url_book_counteragents_v2)
+        return self._dl_post(self.url_book_counteragents_v2)
 
     def dl_book_counteragents_full(self):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         #self.payload["counteragentIds"] = ca_ids
-        return self.dl_post(self.url_book_counteragents_v2)
+        return self._dl_post(self.url_book_counteragents_v2)
 
     def dl_book_counteragents(self):
-        self.payload = self.customers_auth()
-        return self.dl_post(self.url_book_counteragents)
+        self.payload = self._customers_auth()
+        return self._dl_post(self.url_book_counteragents)
 
     def dl_counteragents(self, full_info=False):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         if full_info:
             self.payload["full_info"] = str(full_info)
-        return self.dl_post(self.url_counteragents)
+        return self._dl_post(self.url_counteragents)
 
     def dl_book_address(self, addr_id):
         """
         Получение списка контактных лиц и телефонов
         """
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["addressID"] = addr_id
-        return self.dl_post(self.url_book_address)
+        return self._dl_post(self.url_book_address)
 
     def dl_addresses(self, ca_id):
         """
         список адресов контрагента
         """
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload["counteragentID"] = ca_id
-        return self.dl_post(self.url_addresses)
+        return self._dl_post(self.url_addresses)
 
     def dl_any(self, url):
-        self.payload = self.public_auth()
-        return self.dl_post(url)
+        self.payload = self._public_auth()
+        return self._dl_post(url)
 
     def dl_request_v1(self, params):
         self.payload = params.copy()
-        self.payload.update(self.customers_auth())
+        self.payload.update(self._customers_auth())
         # data = params.copy()
-        # data.update(self.customers_auth())
+        # data.update(self._customers_auth())
         # logging.info('data=%s'.format(data))
         if self.session_id:
-            return self.dl_post(self.url_request)
+            return self._dl_post(self.url_request)
             # return requests.post(self.url_request, data=json.dumps(data),
             #                      headers=self.headers).json()
         else:
@@ -249,13 +250,13 @@ class DellinAPI():
         #    logging.info('k=%s, v=%s, dict=%s', k, v, isinstance(v, dict))
 
         # self.payload = params.copy()
-        # self.payload.update(self.customers_auth())
+        # self.payload.update(self._customers_auth())
         data = params.copy()
-        data.update(self.customers_auth())
+        data.update(self._customers_auth())
         logging.info('data=%s', data)
 
         if self.session_id:
-            # return self.dl_post(self.url_request_v2)
+            # return self._dl_post(self.url_request_v2)
             return requests.post(self.url_request_v2,
                                  data=json.dumps(data),
                                  headers=self.headers).json()
@@ -265,49 +266,49 @@ class DellinAPI():
     def dl_request_v2(self, params):
         """ Do request via API v2 """
         self.payload = params.copy()
-        self.payload.update(self.customers_auth())
+        self.payload.update(self._customers_auth())
         # data = params.copy()
-        # data.update(self.customers_auth())
+        # data.update(self._customers_auth())
         # logging.info('data=%s'.format(data))
 
         if self.session_id:
-            res = self.dl_post(self.url_request_v2)
+            res = self._dl_post(self.url_request_v2)
         else:
             res = self.payload
         return res
 
     def dl_request(self, arc_shipment_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         """
         SELECT payload's params from PG by arc_shipment_id
 
         sender_id, receiver_id, proc_date, totalWeight, totalVolume, quantity,
         maxLength, maxHeight, maxWidth, maxWeight):
         """
-        return self.dl_post(self.url_request)
+        return self._dl_post(self.url_request)
 
     def dl_countries(self):
-        self.payload = self.public_auth()
-        return self.dl_post(self.url_dir_countries)
+        self.payload = self._public_auth()
+        return self._dl_post(self.url_dir_countries)
 
     def dl_opf_list(self):
-        self.payload = self.public_auth()
-        return self.dl_post(self.url_dir_opf_list)
+        self.payload = self._public_auth()
+        return self._dl_post(self.url_dir_opf_list)
 
     def dl_places(self):
-        self.payload = self.public_auth()
-        return self.dl_post(self.url_dir_places)
+        self.payload = self._public_auth()
+        return self._dl_post(self.url_dir_places)
 
     def dl_streets(self):
-        self.payload = self.public_auth()
-        return self.dl_post(self.url_dir_streets)
+        self.payload = self._public_auth()
+        return self._dl_post(self.url_dir_streets)
 
     def dl_book_counteragents_update(self, opf_uid, name, inn, street_kladr,
                                      house,
                                      building=None, structure=None, flat=None):
         """ OBSOLETE создание и обновление контрагента-юр.лицо
         """
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"form": opf_uid})
         self.payload.update({"name": name})
         self.payload.update({"inn": inn})
@@ -322,16 +323,16 @@ class DellinAPI():
         loc_addr = '{{{0}}}'.format(loc_addr)
         self.payload.update({"juridicalAddress": json.loads(loc_addr)})
         # DEBUG return json.dumps(self.payload)
-        return self.dl_post(self.url_book_counteragents_update)
+        return self._dl_post(self.url_book_counteragents_update)
 
     def dl_book_ca_update(self, params):
         """ создание и обновление контрагента
         """
         self.payload = params.copy()
-        self.payload.update(self.customers_auth())
+        self.payload.update(self._customers_auth())
 
         if self.session_id:
-            return self.dl_post(self.url_book_counteragents_update)
+            return self._dl_post(self.url_book_counteragents_update)
         else:
             return self.payload
 
@@ -339,60 +340,60 @@ class DellinAPI():
         """ создание и обновление контрагента
         """
         self.payload = params.copy()
-        self.payload.update(self.customers_auth())
+        self.payload.update(self._customers_auth())
 
         if self.session_id:
-            return self.dl_post(self.url_book_counteragents_update_v2)
+            return self._dl_post(self.url_book_counteragents_update_v2)
         else:
             return self.payload
 
     def dl_contact_add(self, addr_id, contact_name):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"addressID": addr_id})
         self.payload.update({"contact": contact_name})
-        return self.dl_post(self.url_contacts_update)
+        return self._dl_post(self.url_contacts_update)
 
     def dl_contact_update(self, person_id, contact_name):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"personID": person_id})
         self.payload.update({"contact": contact_name})
-        return self.dl_post(self.url_contacts_update)
+        return self._dl_post(self.url_contacts_update)
 
     def dl_phone_add(self, addr_id, phone, add_num=None):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"addressID": addr_id})
         self.payload.update({"phoneNumber": phone})
         self.payload.update({"addNumber": add_num})
-        return self.dl_post(self.url_phones_update)
+        return self._dl_post(self.url_phones_update)
 
     def dl_phone_update(self, phone_id, phone, add_num=None):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"phoneID": phone_id})
         self.payload.update({"phoneNumber": phone})
         self.payload.update({"addNumber": add_num})
-        return self.dl_post(self.url_phones_update)
+        return self._dl_post(self.url_phones_update)
 
 
     def dl_any_address_add(self, params):
         """ добавление адреса, как по КЛАДР, так и произвольного
         """
         self.payload = params.copy()
-        self.payload.update(self.customers_auth())
+        self.payload.update(self._customers_auth())
         if self.session_id:
-            return self.dl_post(self.url_addresses_update)
+            return self._dl_post(self.url_addresses_update)
         else:
             return self.payload
 
 
     def dl_address_add_v2(self, ca_id, free_addr):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"counteragentID": ca_id})
         self.payload.update({"search": free_addr})
-        return self.dl_post(self.url_addresses_update_v2)
+        return self._dl_post(self.url_addresses_update_v2)
 
     def dl_address_add(self, ca_id, street_kladr, house, building=None,
                        structure=None, flat=None):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"counteragentID": ca_id})
         self.payload.update({"street": street_kladr})
         self.payload.update({"house": house})
@@ -402,7 +403,7 @@ class DellinAPI():
             self.payload.update({"structure": structure})
         if flat:
             self.payload.update({"flat": flat})
-        return self.dl_post(self.url_addresses_update)
+        return self._dl_post(self.url_addresses_update)
 
     def dl_address_update(self, addr_id, street_kladr=None, house=None,
                           building=None, structure=None, flat=None):
@@ -414,7 +415,7 @@ class DellinAPI():
             logging.warning('Nothing to update, all arguments are None')
             return None
 
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"addressID": addr_id})
         if street_kladr:
             self.payload.update({"street": street_kladr})
@@ -427,19 +428,19 @@ class DellinAPI():
         if flat:
             self.payload.update({"flat": flat})
 
-        return self.dl_post(self.url_addresses_update)
+        return self._dl_post(self.url_addresses_update)
 
     def dl_address_term_add(self, ca_id, term_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"counteragentID": ca_id})
         self.payload.update({"terminal_id": term_id})
-        return self.dl_post(self.url_addresses_update)
+        return self._dl_post(self.url_addresses_update)
 
     def dl_address_term_update(self, addr_id, term_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"addressID": addr_id})
         self.payload.update({"terminal_id": term_id})
-        return self.dl_post(self.url_addresses_update)
+        return self._dl_post(self.url_addresses_update)
 
     def dl_book_delete(self, ca_list=None, addr_list=None, contact_list=None,
                        phone_list=None):
@@ -460,7 +461,7 @@ class DellinAPI():
            }
         }
         """
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         if ca_list:
             ca_ids = dict([("id", ca_list)])
             self.payload.update({"counteragents": ca_ids})
@@ -474,28 +475,28 @@ class DellinAPI():
             cont_ids = dict([("id", contact_list)])
             self.payload.update({"contacts": cont_ids})
         # return self.payload
-        return self.dl_post(self.url_book_delete)
+        return self._dl_post(self.url_book_delete)
 
     def dl_printable(self, doc_uid):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"docuid": doc_uid})
         self.payload.update({"order": "bill"})
-        return self.dl_post(self.url_printable)
+        return self._dl_post(self.url_printable)
 
     def dl_labels(self, order_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"orderID": order_id})
         self.payload.update({"cargoPlaces": [{"cargoPlace": "", "amount": 1}] })
-        return self.dl_post(self.url_labels)
+        return self._dl_post(self.url_labels)
 
     def dl_get_labels(self, order_id):
-        self.payload = self.customers_auth()
+        self.payload = self._customers_auth()
         self.payload.update({"orderID": order_id})
-        return self.dl_post(self.url_get_labels)
+        return self._dl_post(self.url_get_labels)
 
     def dl_logout(self):
-        self.payload = self.customers_auth()
-        return self.dl_post(self.url_logout)
+        self.payload = self._customers_auth()
+        return self._dl_post(self.url_logout)
 
 
 """
