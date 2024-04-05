@@ -15,44 +15,42 @@ class DellinAPI():
     Base class for api.dellin.ru
     """
     host = "https://api.dellin.ru"
-    url_login = '%s/v1/customers/login.json' % host
-    url_sfrequest = '%s/v1/customers/sfrequest.json' % host
-    url_tracker = '%s/v2/public/tracker.json' % host
-    url_tracker_adv = '%s/v1/public/tracker_advanced.json' % host
-    url_calculator = '%s/v1/public/calculator.json' % host
-    url_logout = '%s/v1/customers/logout.json' % host
-    url_orders = '%s/v2/customers/orders.json' % host
-    url_orders_v3 = '%s/v3/orders.json' % host
+    url_login = f"{host}/v1/customers/login.json"
+    url_sfrequest = f"{host}/v1/customers/sfrequest.json"
+    url_tracker = f"{host}/v2/public/tracker.json"
+    url_tracker_adv = f"{host}/v1/public/tracker_advanced.json"
+    url_calculator = f"{host}/v1/public/calculator.json"
+    url_logout = f"{host}/v1/customers/logout.json"
+    url_orders = f"{host}/v2/customers/orders.json"
+    url_orders_v3 = f"{host}/v3/orders.json"
     # справочник контрагентов
-    url_book_counteragents = '%s/v1/customers/book/counteragents.json' % host
-    url_book_counteragents_v2 = '%s/v2/book/counteragents.json' % host
+    url_book_counteragents = f"{host}/v1/customers/book/counteragents.json"
+    url_book_counteragents_v2 = f"{host}/v2/book/counteragents.json"
     # наши фирмы, подключённые к ЛК
-    url_counteragents = '%s/v1/customers/counteragents.json' % host
+    url_counteragents = f"{host}/v1/customers/counteragents.json"
     # список адресов контрагента
-    url_addresses = '%s/v1/customers/book/addresses.json' % host
-    url_dir_countries = '%s/v1/public/countries.json' % host
-    url_dir_opf_list = '%s/v1/public/opf_list.json' % host
-    url_dir_places = '%s/v1/public/places.json' % host
-    url_dir_streets = '%s/v1/public/streets.json' % host
+    url_addresses = f"{host}/v1/customers/book/addresses.json"
+    url_dir_countries = f"{host}/v1/public/countries.json"
+    url_dir_opf_list = f"{host}/v1/public/opf_list.json"
+    url_dir_places = f"{host}/v1/public/places.json"
+    url_dir_streets = f"{host}/v1/public/streets.json"
     # Получение списка контактных лиц и телефонов
-    url_book_address = '%s/v1/customers/book/address.json' % host
-    url_book_counteragents_update = \
-        '%s/v1/customers/book/counteragents/update.json' % host
-    url_book_counteragents_update_v2 = \
-        '%s/v2/book/counteragent/update.json' % host
+    url_book_address = f"{host}/v1/customers/book/address.json"
+    url_book_counteragents_update = f"{host}/v1/customers/book/counteragents/update.json"
+    url_book_counteragents_update_v2 = f"{host}/v2/book/counteragent/update.json"
     # добавить или обновить телефон по адресу
-    url_phones_update = '%s/v1/customers/book/phones/update.json' % host
+    url_phones_update = f"{host}/v1/customers/book/phones/update.json"
     # добавить или обновить контакт по адресу
-    url_contacts_update = '%s/v1/customers/book/contacts/update.json' % host
+    url_contacts_update = f"{host}/v1/customers/book/contacts/update.json"
     # добавить или обновить адрес контрагента
-    url_addresses_update = '%s/v1/customers/book/addresses/update.json' % host
-    url_addresses_update_v2 = '%s/v2/book/address/update.json' % host
-    url_request = '%s/v1/customers/request.json' % host
-    url_request_v2 = '%s/v2/request.json' % host
-    url_book_delete = '%s/v1/customers/book/delete.json' % host
-    url_printable = '%s/v1/printable.json' % host
-    url_labels = '%s/v2/request/cargo/shipment_labels.json' % host
-    url_get_labels = '%s/v2/request/cargo/shipment_labels/get.json' % host
+    url_addresses_update = f"{host}/v1/customers/book/addresses/update.json"
+    url_addresses_update_v2 = f"{host}/v2/book/address/update.json"
+    url_request = f"{host}/v1/customers/request.json"
+    url_request_v2 = f"{host}/v2/request.json"
+    url_book_delete = f"{host}/v1/customers/book/delete.json"
+    url_printable = f"{host}/v1/printable.json"
+    url_labels = f"{host}/v2/request/cargo/shipment_labels.json"
+    url_get_labels = f"{host}/v2/request/cargo/shipment_labels/get.json"
     # headers = {'Content-type': 'application/javascript'}
     # headers = {'Content-type': 'application/json'}
     headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
