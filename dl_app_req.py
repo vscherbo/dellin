@@ -5,17 +5,14 @@
 
 #import json
 import dataclasses
-import datetime
 import logging
+import sys
+from datetime import date
 
 import log_app
 from pg_app import PGapp
 
 import dl_app
-
-#import sys
-
-
 
 SQL = """ SELECT dl_counteragents.inn AS sender_inn, dl_counteragents_1.inn AS receiver_inn,
 delivery.term_id AS terminal_id
@@ -28,8 +25,22 @@ INNER JOIN ext.dl_counteragents AS dl_counteragents_1 ON dl_addresses_1.ca_id = 
 INNER JOIN ext.dl_counteragents ON dl_addresses.ca_id = dl_counteragents.id
 WHERE shipments.shp_id=%s;"""
 
-#dl_app.parser.add_argument('--doc_id', type=str, required=True, help='tracking number')
-#dl_app.parser.add_argument('--shp_id', type=int, required=True, help='shp_id')
+INN_SQL = "SELECT inn FROM ext.dl_counteragents WHERE id=%s;"
+
+TERM_ID_SQL = "SELECT terminal_id FROM shp.vw_dl_addresses WHERE id=%s;"
+
+INN_TO_UID = {
+'7802715214': 'B1BC6E79-1591-11E1-B592-02215ECC9D4B',
+'7802731174': 'AC65DB70-9142-11E2-98F4-E61F13ED5CB9',
+'7804431521': '8710c33e-4480-4e9f-ace2-69b3845676e1',
+'7805345064': '5078588d-b3af-4140-9660-5251a2e79104',
+'7805599407': '09D59E9F-5BE4-11E2-B398-0050569420A4',
+'7805781663': 'ab5c3b1c-e27d-4f83-8d0f-e3df07452576',
+'7805812449': 'd3e555ce-a21b-4a5a-8c23-7b517fef3054',
+'7816316876': '569f5b62-9779-46f4-908a-abf470aa0a57',
+#'7816316876': 'fe56ca78-d06e-489e-a5de-8f98885ac80b',
+'7816676981': '20e9d75b-0ec3-450c-b5d3-8b5b93b23a4f'
+        }
 
 @dataclasses.dataclass
 class Member:
@@ -47,9 +58,10 @@ class ReqParams:
     members: {}
     boxes: int
     wepay: bool
-    pre_shipdate: datetime.date
+    pre_shipdate: str
     delivery_type: int
     is_terminal: bool
+    our_uid: str
 
 class DLreq(dl_app.DL_app, log_app.LogApp):
     """ Class for requests v2 """
@@ -58,6 +70,8 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
                   'sender_phone': 'shp.dl_req_sender_phones',
                   'receiver_phone': 'shp.dl_req_receiver_phones'
                   }
+    delivery_payer = {True: 'sender', False: 'receiver'}  # wepay
+    delivery_type = {1: "auto", 4: "express", 6: "avia"}  # v1 -> v2
 
     def __init__(self, args, description):
         print('init1::', args)
@@ -92,6 +106,12 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             contact_ids=self._get_ids('sender_contact'),
             phone_ids=self._get_ids('sender_phone')
             )
+        inn_sql = self.pgdb.curs_dict.mogrify(INN_SQL, (rec["snd_ca_id"] ,))
+        logging.info('inn_sql=%s', inn_sql)
+        if self.pgdb.run_query(inn_sql, dict_mode=True) == 0:
+            res_inn = self.pgdb.curs_dict.fetchone()
+            logging.info('res_inn=%s', res_inn["inn"])
+        #
         loc_receiver = Member(
             ca_id=rec["rcv_ca_id"],
             addr_id=rec["rcv_addr_id"],
@@ -106,8 +126,9 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             wepay=rec["wepay"],
             boxes=rec["boxes"],
             pre_shipdate=rec["pre_shipdate"],
-            delivery_type=rec["delivery_type"],
-            is_terminal=rec["is_terminal"]
+            delivery_type=rec["delivery_type"],  # TODO 1, 4, 6 - auto, express, avia
+            is_terminal=rec["is_terminal"],
+            our_uid=INN_TO_UID[res_inn["inn"]]
                 )
 
     def _get_ids(self, mode):
@@ -131,13 +152,115 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         logging.info('role=%s, member=%s', role, member)
         return member
 
+    def _arrival(self):
+        """ prepare 'arrival' for request """
+        delivery_arrival = {}
+
+        loc_addr_id = self._req_params.members['receiver'].addr_id
+        if self._req_params.is_terminal:
+            delivery_arrival["variant"] = 'terminal'
+            # SELECT terminal_id FROM shp.vw_dl_addresses WHERE id = 46729939
+            term_sql = self.pgdb.curs_dict.mogrify(TERM_ID_SQL, (loc_addr_id ,))
+            logging.info('term_sql=%s', term_sql)
+            if self.pgdb.run_query(term_sql, dict_mode=True) == 0:
+                res_term = self.pgdb.curs_dict.fetchone()
+                logging.info('res_term=%s', res_term["terminal_id"])
+                delivery_arrival["terminalID"] = res_term["terminal_id"]
+        else:
+            delivery_arrival["variant"] = 'address'
+            delivery_arrival["addressID"] = loc_addr_id
+        return delivery_arrival
+
+    def _derival(self):
+        """ prepare 'derival' for request """
+        delivery_derival = {}
+
+        # "request.payment.primaryPayer"
+        #delivery_derival["payer"] = self.delivery_payer[self._req_params.wepay]
+
+        delivery_derival["produceDate"] = date.strftime(self._req_params.pre_shipdate, '%Y-%m-%d')
+        delivery_derival["variant"] = 'terminal'
+        #delivery_derival["terminalID"] = self._req_params.members['sender'].addr_id
+        delivery_derival["terminalID"] = 1  # Парнас
+        return delivery_derival
+
+    def _delivery(self):
+        """ prepare 'delivery' for request """
+        delivery = {
+                "deliveryType": {"type": self.delivery_type[self._req_params.delivery_type]},
+                "derival": self._derival(),
+                "arrival": self._arrival()
+                }
+        logging.info("delivery=%s", delivery)
+        return delivery
+
+    def _cargo(self):
+        """ prepare 'cargo' for request """
+        cargo = {}
+        insurance = {
+            "statedValue": 0.0,
+            # "payer": insurance_payer,  == "request.payment.primaryPayer"
+            "term": False,  # no insurance
+        }
+
+        cargo_length = 0.1
+        cargo_width = 0.1
+        cargo_height = 0.1
+        cargo_weight = 0.5
+        cargo_total_volume = 0.001
+        cargo_total_weight = 0.5
+
+        cargo = {
+            "quantity": self._req_params.boxes,
+            "length": cargo_length,
+            "width": cargo_width,
+            "height": cargo_height,
+            "weight": cargo_weight,
+            "totalVolume": cargo_total_volume,
+            "totalWeight": cargo_total_weight,
+            "insurance": insurance,
+            "freight_uid": "0xab117f72d9de97b843ba5fd18cc2e858"  # 'Комплектующие'
+        }
+        logging.info("cargo=%s", cargo)
+        return cargo
+
+    def _payment(self):
+        """ prepare 'payment' for request """
+        payment = {
+            "type": 'noncash',
+            "primaryPayer": self.delivery_payer[self._req_params.wepay]
+        }
+        logging.info("payment=%s", payment)
+        return payment
+
+    def _members(self):
+        """ prepare 'members' for request """
+        #our_uid = '5078588d-b3af-4140-9660-5251a2e79104'  # ТД ЭП
+
+        # Request.Members.requester
+        members_requester = {
+            "role": "sender",
+            "uid": self._req_params.our_uid
+        }
+        members = {
+            "requester": members_requester,
+            "sender": self._member('sender'),
+            "receiver": self._member('receiver')
+        }
+        logging.info("members=%s", members)
+        return members
+
     def req(self, shp_id):
         """ Do request v2 """
         self.shp_id = shp_id
         self._get_req_params()
-        self._member('sender')
-        self._member('receiver')
-
+        request = {}
+        request["inOrder"] = False
+        request["delivery"] = self._delivery()
+        request["members"] = self._members()
+        request["cargo"] = self._cargo()
+        request["payment"] = self._payment()
+        return self.dl.dl_request_v2(request)
 
 def main():
     """ Just main """
@@ -146,15 +269,14 @@ def main():
 
     app = DLreq(args=args, description='DL request v2')
     logging.info("args=%s", args)
-    app.req(args.shp_id)
-
+    """
+    dl_res = app.req(args.shp_id)
+    logging.info("dl_res=%s", dl_res)
     """
     if app.login(auth=True):
         #arg = [].append(args.doc_id)
         logging.info('args.shp_id=%s', args.shp_id)
-        app.req(args.shp_id)
-        params = {}
-        dl_res = app.dl.dl_request_v2(params)
+        dl_res = app.req(args.shp_id)
         if dl_res is None:
             logging.error("dl_request res is None")
         elif "errors" in dl_res.keys():
@@ -170,7 +292,6 @@ def main():
             print(err_str, file=sys.stderr, end='', flush=True)
 
         app.logout()
-    """
 
 if __name__ == '__main__':
     main()
