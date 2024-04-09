@@ -257,12 +257,13 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         logging.info("members=%s", members)
         return members
 
-    def req(self, shp_id):
+    def req(self, shp_id, prod_mode):
         """ Do request v2 """
         self.shp_id = shp_id
         self._get_req_params()
         request = {}
-        request["inOrder"] = False
+        #request["inOrder"] = False  # NON production!
+        request["inOrder"] = not prod_mode
         request["delivery"] = self._delivery()
         request["members"] = self._members()
         request["cargo"] = self._cargo()
@@ -272,6 +273,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
 def main():
     """ Just main """
     log_app.PARSER.add_argument('--shp_id', type=int, required=True, help='shp_id to do request')
+    log_app.PARSER.add_argument('--prod', type=bool, default=False, help='If True, do request in the prod mode')
     args = log_app.PARSER.parse_args()
 
     app = DLreq(args=args, description='DL request v2')
@@ -283,7 +285,7 @@ def main():
     if app.login(auth=True):
         #arg = [].append(args.doc_id)
         logging.info('args.shp_id=%s', args.shp_id)
-        dl_res = app.req(args.shp_id)
+        dl_res = app.req(args.shp_id, args.prod)
         if dl_res is None:
             logging.error("dl_request res is None")
         elif "errors" in dl_res.keys():
