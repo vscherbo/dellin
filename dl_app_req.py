@@ -159,6 +159,12 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         loc_addr_id = self._req_params.members['receiver'].addr_id
         if self._req_params.is_terminal:
             delivery_arrival["variant"] = 'terminal'
+            self.pgdb.curs_dict.callproc('shp.dl_term_id', (loc_addr_id,))
+            res_term = self.pgdb.curs_dict.fetchone()
+            if res_term is not None:
+                logging.info('res_term=%s', res_term[0])
+                delivery_arrival["terminalID"] = res_term[0]
+            """
             # SELECT terminal_id FROM shp.vw_dl_addresses WHERE id = 46729939
             term_sql = self.pgdb.curs_dict.mogrify(TERM_ID_SQL, (loc_addr_id ,))
             logging.info('term_sql=%s', term_sql)
@@ -166,6 +172,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
                 res_term = self.pgdb.curs_dict.fetchone()
                 logging.info('res_term=%s', res_term["terminal_id"])
                 delivery_arrival["terminalID"] = res_term["terminal_id"]
+            """
         else:
             delivery_arrival["variant"] = 'address'
             delivery_arrival["addressID"] = loc_addr_id

@@ -51,8 +51,7 @@ class DellinAPI():
     url_printable = f"{host}/v1/printable.json"
     url_labels = f"{host}/v2/request/cargo/shipment_labels.json"
     url_get_labels = f"{host}/v2/request/cargo/shipment_labels/get.json"
-    # headers = {'Content-type': 'application/javascript'}
-    # headers = {'Content-type': 'application/json'}
+    url_counteragents_v2 = f"{host}/v2/counteragents.json"
     headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
 
     def __init__(self, app_key, login=None, password=None):
@@ -70,6 +69,13 @@ class DellinAPI():
             self._auth(login, password)
 
     def _auth(self, login, password):
+        """
+        Perform authentication.
+
+        Args:
+            login (str): The login name.
+            password (str): The password.
+        """
         self.payload = {'login': login,
                         'password': password}
         self.payload.update(self._public_auth())
@@ -93,7 +99,7 @@ class DellinAPI():
 
     @staticmethod
     def __exception_fmt__(tag, exception):
-        return '{0} msg={1}'.format(tag, str(exception).encode('utf-8'))
+        return f'{tag} msg={str(exception).encode("utf-8")}'
 
     def _dl_post(self, post_url):
         """ POST an request to api.dellin.ru
@@ -162,6 +168,16 @@ class DellinAPI():
         return ret
 
     def dl_tracker(self, doc_id):
+        """
+        Get tracker information for a document.
+
+        Args:
+            doc_id (str): The document ID.
+
+        Returns:
+            dict: The response JSON.
+        """
+
         self.payload = self._customers_auth()
         self.payload["docid"] = doc_id
         return self._dl_post(self.url_tracker)
@@ -491,6 +507,12 @@ class DellinAPI():
         self.payload = self._customers_auth()
         self.payload.update({"orderID": order_id})
         return self._dl_post(self.url_get_labels)
+
+    def dl_counteragents_v2(self, full_info=False):
+        self.payload = self._customers_auth()
+        if full_info:
+            self.payload["full_info"] = str(full_info)
+        return self._dl_post(self.url_counteragents_v2)
 
     def dl_logout(self):
         self.payload = self._customers_auth()
