@@ -74,11 +74,8 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
     delivery_type = {1: "auto", 4: "express", 6: "avia"}  # v1 -> v2
 
     def __init__(self, args, description):
-        print('init1::', args)
         log_app.LogApp.__init__(self, args=args, description=description)
-        print('init2::', args)
         dl_app.DL_app.__init__(self, args=args, description=description)
-        print('init3::', args)
         config_filename = args.conf
         self.get_config(config_filename)
         self.pgdb = PGapp(pg_host=self.config['PG']['pg_host'],
