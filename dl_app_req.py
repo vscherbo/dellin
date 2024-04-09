@@ -3,11 +3,11 @@
 """ Inquire order info from dellin
 """
 
-#import json
 import dataclasses
+import json
 import logging
 import sys
-from datetime import date
+from datetime import date, datetime
 
 import log_app
 from pg_app import PGapp
@@ -254,13 +254,16 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         logging.info("members=%s", members)
         return members
 
-    def req(self, shp_id, prod_mode):
+    def req(self, shp_id, test_mode):
         """ Do request v2 """
         self.shp_id = shp_id
         self._get_req_params()
         request = {}
-        #request["inOrder"] = False  # NON production!
-        request["inOrder"] = not prod_mode
+        if test_mode:
+            request["inOrder"] = False  # NON production!
+        else:
+            request["inOrder"] = True
+
         request["delivery"] = self._delivery()
         request["members"] = self._members()
         request["cargo"] = self._cargo()
@@ -270,7 +273,8 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
 def main():
     """ Just main """
     log_app.PARSER.add_argument('--shp_id', type=int, required=True, help='shp_id to do request')
-    log_app.PARSER.add_argument('--prod', type=bool, default=False, help='If True, do request in the prod mode')
+    log_app.PARSER.add_argument('--test', type=bool, default=False,
+            help='If True, do request in the test mode')
     args = log_app.PARSER.parse_args()
 
     app = DLreq(args=args, description='DL request v2')
@@ -282,16 +286,39 @@ def main():
     if app.login(auth=True):
         #arg = [].append(args.doc_id)
         logging.info('args.shp_id=%s', args.shp_id)
-        dl_res = app.req(args.shp_id, args.prod)
+        dl_res = app.req(args.shp_id, args.test)
         if dl_res is None:
             logging.error("dl_request res is None")
         elif "errors" in dl_res.keys():
             logging.error("dl_request errors=%s", dl_res["errors"])
         elif app.dl.status_code == 200:
-            pass
-            #logging.debug('arrival=%s', json.dumps(dl_res["orders"][0]['arrival'],
-            #logging.debug('dl_res["orders"]=%s', json.dumps(dl_res["orders"],
-            #                                                ensure_ascii=False, indent=4))
+            logging.debug('dl_res=%s', json.dumps(dl_res,
+                                                            ensure_ascii=False, indent=4))
+            now = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+            dl_data = dl_res["data"]
+            if dl_data["state"] == 'success':
+                if args.test:
+                    loc_status = 2
+                else:
+                    loc_status = 1
+
+                upd_sql = app.pgdb.curs.mogrify(u"""
+UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
+ret_msg=NULL, req_id=%s, req_barcode=%s
+WHERE shp_id=%s;""", (loc_status, now, app.dl.status_code, dl_data["requestID"],
+                      dl_data["barcode"], args.shp_id))
+                print(f'{dl_data["requestID"]}@{dl_data["barcode"]}', end='', flush=True)
+            else:
+                upd_sql = app.pgdb.curs.mogrify(u"""
+UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
+ret_msg=%s
+WHERE shp_id=%s;""", (9, now, app.dl.status_code, json.dumps(dl_data, ensure_ascii=False),
+    args.shp_id))
+
+            logging.info(u"upd_sql=%s", upd_sql)
+            app.pgdb.curs.execute(upd_sql)
+            app.pgdb.conn.commit()
+
         else:
             err_str = 'ERROR=%s', app.dl.err_msg
             logging.error(err_str)
