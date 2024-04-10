@@ -223,7 +223,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             "totalVolume": cargo_total_volume,
             "totalWeight": cargo_total_weight,
             "insurance": insurance,
-            "freight_uid": "0xab117f72d9de97b843ba5fd18cc2e858"  # 'Комплектующие'
+            "freight_uid": "0xbfff425683f453bb413cb1ddc65d155c"  # 'Комплектующие'
         }
         logging.info("cargo=%s", cargo)
         return cargo
