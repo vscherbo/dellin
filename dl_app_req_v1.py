@@ -110,7 +110,8 @@ def main():
     request["primaryPayer"] = loc_payer
     request["paymentType"] = 1
     request["deliveryType"] = delivery_type
-    request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
+    #request["freight_uid"] = "0xab117f72d9de97b843ba5fd18cc2e858"
+    request["freight_uid"] = "0xbfff425683f453bb413cb1ddc65d155c"  # Комплектующие
 
     # additionalServices
     #curs.execute('SELECT is_terminal FROM shp.vw_dl_addresses WHERE id = {}'.format(\
