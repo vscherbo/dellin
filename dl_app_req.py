@@ -173,7 +173,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         else:
             delivery_arrival["variant"] = 'address'
             delivery_arrival["addressID"] = loc_addr_id
-            #delivery_arrival["time"] = {"worktimeStart": "07:00", "worktimeEnd": "20:00"}
+            delivery_arrival["time"] = {"worktimeStart": "07:00", "worktimeEnd": "20:00"}
         return delivery_arrival
 
     def _derival(self):
