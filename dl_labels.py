@@ -15,8 +15,7 @@ def main():
     """ Just main """
 
     dl_app.parser.add_argument('--req_id', type=int, required=True, help='DL tracking number')
-    dl_app.parser.add_argument('--out_dir', type=str, required=True, default='.',
-            help='output directory')
+    dl_app.parser.add_argument('--out_dir', type=str, default='.', help='output directory')
     dl_app.parser.add_argument('--type', type=str, help='DL-label type: pdf(default), jpg, png')
     dl_app.parser.add_argument('--format', type=str, help='DL-label format: 80x50(default), a4')
     args = dl_app.parser.parse_args()
