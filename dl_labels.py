@@ -36,7 +36,7 @@ def main():
     else:
         out_format = args.type
 
-    dl_res = dl_labels.dl.dl_get_labels(args.req_id, ext, out_format)
+    dl_res = dl_labels.dl.dl_get_labels(args.req_id, format=out_format, type=ext)
     if dl_res is None:
         logging.error("dl_get_labels res is None")
     elif "errors" in dl_res.keys():
