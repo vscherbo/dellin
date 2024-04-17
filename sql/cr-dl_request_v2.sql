@@ -32,8 +32,9 @@ BEGIN
     
     IF err_str IS NOT NULL AND err_str <> ''
     THEN 
-       RAISE 'dl_request_v2 [%]', err_str;
-       ret_str := format('%s/%s', ret_str, err_str);
+       RAISE NOTICE 'dl_request_v2 [%]', err_str;
+       --ret_str := format('%s/%s', ret_str, err_str);
+       ret_str := err_str;
     END IF;
     
     return ret_str;
