@@ -503,9 +503,15 @@ class DellinAPI():
         self.payload.update({"cargoPlaces": [{"cargoPlace": "", "amount": 1}] })
         return self._dl_post(self.url_labels)
 
-    def dl_get_labels(self, order_id):
+    def dl_get_labels(self, order_id, arg_format='50x80', arg_type=None):
+        """ get labels
+            arg_type: "pdf"-default; "jpg", "png"
+            arg_format: "80x50"-default, "a4"
+        """
         self.payload = self._customers_auth()
         self.payload.update({"orderID": order_id})
+        self.payload.update({"type": arg_type})
+        self.payload.update({"format": arg_format})
         return self._dl_post(self.url_get_labels)
 
     def dl_counteragents_v2(self, full_info=False):
