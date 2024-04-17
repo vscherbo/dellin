@@ -115,7 +115,7 @@ class DellinAPI():
             loc_data))
         try:
             resp = requests.post(post_url,
-                                 timeout=10,
+                                 timeout=30,
                                  json=self.payload,
                                  headers=self.headers)
             self.status_code = resp.status_code
