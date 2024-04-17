@@ -26,8 +26,17 @@ def main():
     dl_labels.login(auth=True)
 
     #if dl_res['metadata']['status'] == 200 and dl_res['state'] == 'processed':
+    if args.type is None:
+        ext = 'pdf'
+    else:
+        ext = args.type
 
-    dl_res = dl_labels.dl.dl_get_labels(args.req_id, args.type, args.format)
+    if args.format is None:
+        out_format = '80x50'
+    else:
+        out_format = args.type
+
+    dl_res = dl_labels.dl.dl_get_labels(args.req_id, ext, out_format)
     if dl_res is None:
         logging.error("dl_get_labels res is None")
     elif "errors" in dl_res.keys():
@@ -36,15 +45,6 @@ def main():
         print(err_str, file=sys.stderr, end='', flush=True)
     elif dl_labels.dl.status_code == 200:
 
-        if args.type is None:
-            ext = 'pdf'
-        else:
-            ext = args.type
-
-        if args.format is None:
-            ext = '80x50'
-        else:
-            ext = args.type
 
         filename = f'{args.out_dir}/{args.req_id}.{ext}'
         with open(filename, "wb") as barcode_output:
