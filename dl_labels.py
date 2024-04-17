@@ -40,6 +40,12 @@ def main():
             ext = 'pdf'
         else:
             ext = args.type
+
+        if args.format is None:
+            ext = '80x50'
+        else:
+            ext = args.type
+
         filename = f'{args.out_dir}/{args.req_id}.{ext}'
         with open(filename, "wb") as barcode_output:
             try:
