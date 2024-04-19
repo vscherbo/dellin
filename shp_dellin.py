@@ -497,10 +497,10 @@ class DellinAPI():
         self.payload.update({"order": "bill"})
         return self._dl_post(self.url_printable)
 
-    def dl_labels(self, order_id):
+    def dl_labels(self, order_id, shp_id, boxes):
         self.payload = self._customers_auth()
         self.payload.update({"orderID": order_id})
-        self.payload.update({"cargoPlaces": [{"cargoPlace": "", "amount": 1}] })
+        self.payload.update({"cargoPlaces": [{"cargoPlace": str(shp_id), "amount": boxes}] })
         return self._dl_post(self.url_labels)
 
     def dl_get_labels(self, order_id, arg_format='50x80', arg_type=None):
