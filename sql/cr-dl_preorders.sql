@@ -10,3 +10,10 @@ WHERE p.sts_code = 1; -- успешеный предзаказ
 -- WHERE p.sts_code in (1, 10, 11); -- успешеный предзаказ, верифицирован и нет
 -- COMMENT ON COLUMN shp.dl_preorder_params.sts_code IS '0 - исходный, 1 - успешно создан, 2 - тест,черновик, 9 - сбой создания, 10 - верифицирован, 11 - есть расхождения с фактом';
 $function$
+
+
+CREATE TRIGGER dl_preorder_params_au AFTER UPDATE ON
+shp.dl_preorder_params FOR EACH ROW
+WHEN (((old.sts_code <> new.sts_code)
+    AND (new.sts_code = 1))) EXECUTE PROCEDURE fntr_dl_preorder_params_au();
+
