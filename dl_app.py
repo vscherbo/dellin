@@ -29,7 +29,10 @@ class DL_app(object):
 
         config = configparser.ConfigParser(allow_no_value=True)
         config.read(self.args.conf)
-        self.API_KEY = config['dadata_login']['API_KEY']
+        try:
+           self.API_KEY = config['dadata_login']['API_KEY']
+        except KeyError:
+            pass
 
         self.ark_appkey = config['dl_login']['ark_appkey']
         self.user = config['dl_login']['user']
