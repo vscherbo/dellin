@@ -133,13 +133,16 @@ class PgListener(Application, PGapp, log_app.LogApp):
         (req_id, label_type, label_format) = notify.payload.split()
         logging.debug("notify.payload: req_id=%s, label_type=%s, label_format=%s",
                 req_id, label_type, label_format)
-        ret_str = self.dl_labels.get(req_id, arg_type=label_type, arg_format=label_format)
+        ret_str = self.dl_labels.get(req_id, './jpg', arg_type=label_type, arg_format=label_format)
         loc_status = 'got'
         if ret_str is not None:
-            if  'not ready' in ret_str:
+            if 'not ready' in ret_str:
                 loc_status = 'not-ready'
             else:
                 loc_status = 'get-err'
+        else:
+            # copy to FNAS
+            pass
 
         try:
             upd_cmd = self.curs.mogrify(UPD_LBL, (loc_status, ret_str, req_id))
