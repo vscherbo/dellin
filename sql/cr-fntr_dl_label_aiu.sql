@@ -31,5 +31,7 @@ GRANT ALL ON FUNCTION shp.fntr_dl_label_aiu() TO public;
 GRANT ALL ON FUNCTION shp.fntr_dl_label_aiu() TO arc_energo;
 
 -- ##################################################3
+/**
 CREATE TRIGGER dl_labels_aiu AFTER INSERT OR UPDATE ON
 shp.dl_labels_q FOR EACH ROW EXECUTE PROCEDURE fntr_dl_label_aiu();
+**/
