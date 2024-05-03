@@ -7,13 +7,16 @@ import logging
 import os
 import select
 import signal
+from os.path import expanduser
 #from sys import exc_info  # , exit
 from time import sleep
 
 import log_app
+import paramiko
 #import psycopg2
 import psycopg2.extensions
 from pg_app import PGapp
+from scp import SCPClient
 from sig_app import Application
 
 import dl_labels
@@ -133,7 +136,8 @@ class PgListener(Application, PGapp, log_app.LogApp):
         (req_id, label_type, label_format) = notify.payload.split()
         logging.debug("notify.payload: req_id=%s, label_type=%s, label_format=%s",
                 req_id, label_type, label_format)
-        ret_str = self.dl_labels.get(req_id, './jpg', arg_type=label_type, arg_format=label_format)
+        (ret_str, filename) = self.dl_labels.get(req_id, './jpg', arg_type=label_type,
+                arg_format=label_format)
         loc_status = 'got'
         if ret_str is not None:
             if 'not ready' in ret_str:
@@ -142,7 +146,8 @@ class PgListener(Application, PGapp, log_app.LogApp):
                 loc_status = 'get-err'
         else:
             # copy to FNAS
-            pass
+            logging.info('try to scp %s', filename)
+            self._scp(filename)
 
         try:
             upd_cmd = self.curs.mogrify(UPD_LBL, (loc_status, ret_str, req_id))
@@ -153,6 +158,24 @@ class PgListener(Application, PGapp, log_app.LogApp):
         else:
             logging.info("TRY-ELSE: upd Ok")
             self.conn.commit()
+
+    def _scp(self, arg_file):
+        """ Doing scp """
+        home_dir = expanduser("~")
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.load_system_host_keys()
+        loc_key = paramiko.RSAKey.from_private_key_file(home_dir + "/.ssh/id_rsa")
+        ssh.connect('cifs-public.arc.world', username='uploader', pkey=loc_key)
+
+        # SCPCLient takes a paramiko transport as an argument
+        scp = SCPClient(ssh.get_transport())
+
+        scp.put(arg_file, '/mnt/r10/ds_cifs/public/от ИТ/для Упаковки/ДЛ/labels/')
+
+        scp.close()
+
+
 
 if __name__ == '__main__':
     log_app.PARSER.add_argument('--pg_channels', nargs='+', required=True,

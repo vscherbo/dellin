@@ -94,11 +94,12 @@ class DlLabel(dl_app.DL_app):
                     except (IndexError, AttributeError):
                         logging.error('dl_res=%s', dl_res)
                         ret_str = f'write label[{idx}] to file failed'
+                        filename = None
                         logging.exception(ret_str)
         else:
             ret_str = 'a label is not ready yet'
             logging.warning('UNEXPECTED dl_res=%s', dl_res)
-        return ret_str
+        return ret_str, filename
 
 def main():
     """ Just main """
