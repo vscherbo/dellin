@@ -7,10 +7,12 @@ import os
 # import configparser
 #from dl_app import DL_app
 import sys
-# import argparse
-from datetime import datetime
 
 import dl_app
+
+# import argparse
+#from datetime import datetime
+
 
 
 class DlLabel(dl_app.DL_app):
@@ -38,6 +40,20 @@ class DlLabel(dl_app.DL_app):
             ret_str = err_str
         return ret_str
 
+    def _err_handler(self, arg_title, arg_res):
+        """ An errors handler """
+        if arg_res is None:
+            ret_str = f"{arg_title} res is None"
+            logging.error(ret_str)
+        elif "errors" in arg_res.keys():
+            logging.error("%s errors=%s", arg_title, arg_res["errors"])
+            err_list = []
+            for err in arg_res["errors"]:
+                err_list.append(f'{err["detail"]}: {err["fields"]}')
+
+            err_str = ' ,'.join(err_list)
+        return err_str
+
     def get(self, arg_req_id, arg_out_dir='.', arg_type='pdf', arg_format='80x50'):
         """ Get label(-s) from DL """
         ret_str = None
@@ -46,6 +62,7 @@ class DlLabel(dl_app.DL_app):
             ret_str = "dl_get_labels res is None"
             logging.error(ret_str)
         elif "errors" in dl_res.keys():
+            """
             logging.error("dl_get_labels errors=%s", dl_res["errors"])
             err_list = []
             for err in dl_res["errors"]:
@@ -54,23 +71,30 @@ class DlLabel(dl_app.DL_app):
             err_str = ' ,'.join(err_list)
             #print(err_str, file=sys.stderr, end='', flush=True)
             ret_str = err_str
+            """
+            ret_str = self._err_handler('dl_get_labels', dl_res)
         elif self.dl.status_code == 200 and dl_res['metadata']['totalPages'] > 0:
+            logging.info("dl_res['metadata']=%s", dl_res['metadata'])
             # Check if the directory exists, if not, create it
-            filepath = os.path.join(arg_out_dir, datetime.today().strftime('%Y-%m-%d'))
+            #filepath = os.path.join(arg_out_dir, datetime.today().strftime('%Y-%m-%d'))
+            filepath = arg_out_dir
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
 
             # Join directory path and filename
-            filename = os.path.join(filepath, f'{arg_req_id}.{arg_type}')
-            with open(filename, "wb") as barcode_output:
-                try:
-                    # TODO downloaded multiple labels
-                    content = base64.b64decode(dl_res["data"][0]["base64"])
-                    barcode_output.write(content)
-                except (IndexError, AttributeError):
-                    logging.error('dl_res=%s', dl_res)
-                    ret_str = 'write label to file failed'
-                    logging.exception(ret_str)
+            for idx, lbl in enumerate(dl_res["data"]):
+                logging.info('=== lbl[%s]', idx)
+                filename = os.path.join(filepath, f'{arg_req_id}_{idx}.{arg_type}')
+                with open(filename, "wb") as barcode_output:
+                    try:
+                        # TODO downloaded multiple labels
+                        #content = base64.b64decode(dl_res["data"][0]["base64"])
+                        content = base64.b64decode(lbl["base64"])
+                        barcode_output.write(content)
+                    except (IndexError, AttributeError):
+                        logging.error('dl_res=%s', dl_res)
+                        ret_str = f'write label[{idx}] to file failed'
+                        logging.exception(ret_str)
         else:
             ret_str = 'a label is not ready yet'
             logging.warning('UNEXPECTED dl_res=%s', dl_res)
