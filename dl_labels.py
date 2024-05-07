@@ -78,7 +78,7 @@ class DlLabel(dl_app.DL_app):
             for idx, lbl in enumerate(dl_res["data"]):
                 file_idx = idx + 1
                 logging.debug('=== lbl[%s], file_idx=%s', idx, file_idx)
-                # Join directory path and filename
+                # join directory path and filename
                 filename = os.path.join(filepath, f'{arg_req_id}_{file_idx}.{arg_type}')
                 with open(filename, "wb") as barcode_output:
                     try:
@@ -96,8 +96,7 @@ class DlLabel(dl_app.DL_app):
         else:
             ret_str = 'a label is not ready yet'
             logging.warning('UNEXPECTED dl_res=%s', dl_res)
-        #return ret_str, filename
-        return ret_str
+        return ret_str, files
 
 def main():
     """ Just main """
