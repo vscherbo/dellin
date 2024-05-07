@@ -184,7 +184,11 @@ class PgListener(Application, PGapp, log_app.LogApp):
         except paramiko.ssh_exception.AuthenticationException:
             logging.error('Authentication failed')
         except Exception as err:
+<<<<<<< HEAD
             logging.exception("Unexpected err=%s, type=%s", err, type(err))
+=======
+            logging.exception(f"Unexpected err={err}, type={type(err)}")
+>>>>>>> 9d28403017f5c7df6e599a2f3bcf7f8c479c271e
             raise
         else:
             # SCPCLient takes a paramiko transport as an argument
