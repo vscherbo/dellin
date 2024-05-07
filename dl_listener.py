@@ -33,6 +33,11 @@ SIGNALS_TO_NAMES_DICT = dict((getattr(signal, n), n) for n in dir(signal)
 UPD_LBL = \
 "UPDATE shp.dl_labels_q SET status = %s, err_msg = %s, last_dt = now() WHERE prereq_id = %s;"
 
+#class KeepalivesFilter (object):
+#    def filter(self, record):
+#        return record.msg.find('keepalive@openssh.com') < 0
+
+
 class PgListener(Application, PGapp, log_app.LogApp):
     """ PG "notify" signal handler """
     def __init__(self, args):
@@ -161,6 +166,7 @@ class PgListener(Application, PGapp, log_app.LogApp):
 
     def _scp(self, arg_file):
         """ Doing scp """
+        #paramiko.util.get_logger('paramiko.transport').addFilter(KeepalivesFilter())
         home_dir = expanduser("~")
         logging.info("home_dir=%s", home_dir)
         ssh = paramiko.SSHClient()
@@ -188,6 +194,8 @@ if __name__ == '__main__':
 
     ARGS = log_app.PARSER.parse_args()
     APP = PgListener(args=ARGS)
+    paramiko.util.get_logger('paramiko.transport').setLevel(logging.INFO)
+    #.addFilter(KeepalivesFilter())
     APP.main_loop()
     APP.close()
     logging.info("Exiting")
