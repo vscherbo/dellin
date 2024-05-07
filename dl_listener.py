@@ -141,7 +141,7 @@ class PgListener(Application, PGapp, log_app.LogApp):
         (req_id, label_type, label_format) = notify.payload.split()
         logging.debug("notify.payload: req_id=%s, label_type=%s, label_format=%s",
                 req_id, label_type, label_format)
-        (ret_str, filename) = self.dl_labels.get(req_id, './jpg', arg_type=label_type,
+        (ret_str, files) = self.dl_labels.get(req_id, './jpg', arg_type=label_type,
                 arg_format=label_format)
         loc_status = 'got'
         if ret_str is not None:
@@ -151,9 +151,9 @@ class PgListener(Application, PGapp, log_app.LogApp):
                 loc_status = 'get-err'
         else:
             # copy to FNAS
-            logging.info('try to scp %s', filename)
+            logging.info('try to scp %s', files)
             try:
-                self._scp(filename)
+                self._scp(files)
             except Exception as err:
                 logging.exception("Unexpected err=%s, type=%s", err, type(err))
                 raise

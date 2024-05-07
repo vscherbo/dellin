@@ -81,10 +81,12 @@ class DlLabel(dl_app.DL_app):
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
 
-            # Join directory path and filename
+            files = []
             for idx, lbl in enumerate(dl_res["data"]):
-                logging.info('=== lbl[%s]', idx)
-                filename = os.path.join(filepath, f'{arg_req_id}_{idx}.{arg_type}')
+                file_idx = idx + 1
+                logging.debug('=== lbl[%s], file_idx=%s', idx, file_idx)
+                # join directory path and filename
+                filename = os.path.join(filepath, f'{arg_req_id}_{file_idx}.{arg_type}')
                 with open(filename, "wb") as barcode_output:
                     try:
                         # TODO downloaded multiple labels
@@ -96,10 +98,12 @@ class DlLabel(dl_app.DL_app):
                         ret_str = f'write label[{idx}] to file failed'
                         filename = None
                         logging.exception(ret_str)
+                    else:
+                        files.append(filename)
         else:
             ret_str = 'a label is not ready yet'
             logging.warning('UNEXPECTED dl_res=%s', dl_res)
-        return ret_str, filename
+        return ret_str, files
 
 def main():
     """ Just main """
