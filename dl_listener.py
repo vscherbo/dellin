@@ -141,8 +141,9 @@ class PgListener(Application, PGapp, log_app.LogApp):
         (req_id, label_type, label_format) = notify.payload.split()
         logging.debug("notify.payload: req_id=%s, label_type=%s, label_format=%s",
                 req_id, label_type, label_format)
-        (ret_str, filename) = self.dl_labels.get(req_id, './jpg', arg_type=label_type,
-                arg_format=label_format)
+        filepath = './jpg'
+        ret_str = self.dl_labels.get(req_id, filepath, arg_type=label_type,
+                                     arg_format=label_format)
         loc_status = 'got'
         if ret_str is not None:
             if 'not ready' in ret_str:
@@ -151,13 +152,10 @@ class PgListener(Application, PGapp, log_app.LogApp):
                 loc_status = 'get-err'
         else:
             # copy to FNAS
-            logging.info('try to scp %s', filename)
-            try:
-                self._scp(filename)
-            except Exception as err:
-                logging.exception("Unexpected err=%s, type=%s", err, type(err))
-                raise
-            loc_status = 'published'
+            file_arg = f'{filepath}/{req_id}*'
+            logging.info('try to scp %s', file_arg)
+            self._scp(file_arg)
+            loc_status = 'published'  # TODO if error
 
         try:
             upd_cmd = self.curs.mogrify(UPD_LBL, (loc_status, ret_str, req_id))
@@ -177,9 +175,7 @@ class PgListener(Application, PGapp, log_app.LogApp):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.load_system_host_keys()
-        #loc_key = paramiko.RSAKey.from_private_key_file(home_dir + "/.ssh/id_rsa")
         try:
-            #ssh.connect('cifs-public.arc.world', username='uploader', pkey=loc_key)
             ssh.connect('cifs-public.arc.world', username='uploader')
         except paramiko.ssh_exception.AuthenticationException:
             logging.error('Authentication failed')

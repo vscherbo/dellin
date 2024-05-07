@@ -30,6 +30,7 @@ class DlLabel(dl_app.DL_app):
         if dl_res['metadata']['status'] == 200 and dl_res['data']['state'] == 'enqueued':
             logging.info('%s', dl_res['data'])
         elif "errors" in dl_res.keys():
+            """
             logging.error("dl_labels errors=%s", dl_res["errors"])
             err_list = []
             for err in dl_res["errors"]:
@@ -38,6 +39,8 @@ class DlLabel(dl_app.DL_app):
             err_str = ' ,'.join(err_list)
             #print(err_str, file=sys.stderr, end='', flush=True)
             ret_str = err_str
+            """
+            ret_str = self._err_handler('ask labels', dl_res)
         return ret_str
 
     def _err_handler(self, arg_title, arg_res):
@@ -62,16 +65,6 @@ class DlLabel(dl_app.DL_app):
             ret_str = "dl_get_labels res is None"
             logging.error(ret_str)
         elif "errors" in dl_res.keys():
-            """
-            logging.error("dl_get_labels errors=%s", dl_res["errors"])
-            err_list = []
-            for err in dl_res["errors"]:
-                err_list.append(f'{err["detail"]}: {err["fields"]}')
-
-            err_str = ' ,'.join(err_list)
-            #print(err_str, file=sys.stderr, end='', flush=True)
-            ret_str = err_str
-            """
             ret_str = self._err_handler('dl_get_labels', dl_res)
         elif self.dl.status_code == 200 and dl_res['metadata']['totalPages'] > 0:
             logging.info("dl_res['metadata']=%s", dl_res['metadata'])
@@ -81,10 +74,12 @@ class DlLabel(dl_app.DL_app):
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
 
-            # Join directory path and filename
+            files = []
             for idx, lbl in enumerate(dl_res["data"]):
-                logging.info('=== lbl[%s]', idx)
-                filename = os.path.join(filepath, f'{arg_req_id}_{idx}.{arg_type}')
+                file_idx = idx + 1
+                logging.debug('=== lbl[%s], file_idx=%s', idx, file_idx)
+                # Join directory path and filename
+                filename = os.path.join(filepath, f'{arg_req_id}_{file_idx}.{arg_type}')
                 with open(filename, "wb") as barcode_output:
                     try:
                         # TODO downloaded multiple labels
@@ -96,10 +91,13 @@ class DlLabel(dl_app.DL_app):
                         ret_str = f'write label[{idx}] to file failed'
                         filename = None
                         logging.exception(ret_str)
+                    else:
+                        files.append(filename)
         else:
             ret_str = 'a label is not ready yet'
             logging.warning('UNEXPECTED dl_res=%s', dl_res)
-        return ret_str, filename
+        #return ret_str, filename
+        return ret_str
 
 def main():
     """ Just main """
