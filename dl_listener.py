@@ -152,7 +152,12 @@ class PgListener(Application, PGapp, log_app.LogApp):
         else:
             # copy to FNAS
             logging.info('try to scp %s', filename)
-            self._scp(filename)
+            try:
+                self._scp(filename)
+            except Exception as err:
+                logging.exception(f"Unexpected err={err}, type={type(err)}")
+            else:
+               loc_status = 'published'
 
         try:
             upd_cmd = self.curs.mogrify(UPD_LBL, (loc_status, ret_str, req_id))
@@ -178,6 +183,9 @@ class PgListener(Application, PGapp, log_app.LogApp):
             ssh.connect('cifs-public.arc.world', username='uploader')
         except paramiko.ssh_exception.AuthenticationException:
             logging.error('Authentication failed')
+        except Exception as err:
+            logging.exception(f"Unexpected err={err}, type={type(err)}")
+            raise
         else:
             # SCPCLient takes a paramiko transport as an argument
             scp = SCPClient(ssh.get_transport())
