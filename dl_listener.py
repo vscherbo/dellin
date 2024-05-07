@@ -162,18 +162,23 @@ class PgListener(Application, PGapp, log_app.LogApp):
     def _scp(self, arg_file):
         """ Doing scp """
         home_dir = expanduser("~")
+        logging.info("home_dir=%s", home_dir)
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.load_system_host_keys()
-        loc_key = paramiko.RSAKey.from_private_key_file(home_dir + "/.ssh/id_rsa")
-        ssh.connect('cifs-public.arc.world', username='uploader', pkey=loc_key)
+        #loc_key = paramiko.RSAKey.from_private_key_file(home_dir + "/.ssh/id_rsa")
+        try:
+            #ssh.connect('cifs-public.arc.world', username='uploader', pkey=loc_key)
+            ssh.connect('cifs-public.arc.world', username='uploader')
+        except paramiko.ssh_exception.AuthenticationException:
+            logging.error('Authentication failed')
+        else:
+            # SCPCLient takes a paramiko transport as an argument
+            scp = SCPClient(ssh.get_transport())
 
-        # SCPCLient takes a paramiko transport as an argument
-        scp = SCPClient(ssh.get_transport())
+            scp.put(arg_file, '/mnt/r10/ds_cifs/public/от ИТ/для Упаковки/ДЛ/labels/')
 
-        scp.put(arg_file, '/mnt/r10/ds_cifs/public/от ИТ/для Упаковки/ДЛ/labels/')
-
-        scp.close()
+            scp.close()
 
 
 
