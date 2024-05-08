@@ -179,19 +179,19 @@ class PgListener(Application, PGapp, log_app.LogApp):
         ssh.load_system_host_keys()
         try:
             ssh.connect('cifs-public.arc.world', username='uploader')
-        except paramiko.ssh_exception.AuthenticationException:
-            logging.error('Authentication failed')
+        #except paramiko.ssh_exception.AuthenticationException:
+        #    logging.error('Authentication failed')
         except Exception as err:
             logging.exception("Unexpected err=%s, type=%s", err, type(err))
             raise
-        else:
-            # SCPCLient takes a paramiko transport as an argument
-            scp = SCPClient(ssh.get_transport())
+        #else:
+        # SCPCLient takes a paramiko transport as an argument
+        scp = SCPClient(ssh.get_transport())
 
-            scp.put(arg_file, '/mnt/r10/ds_cifs/public/от ИТ/для Упаковки/ДЛ/labels/')
+        scp.put(arg_file, '/mnt/r10/ds_cifs/public/от ИТ/для Упаковки/ДЛ/labels/')
 
-            scp.close()
-            ssh.close()
+        scp.close()
+        ssh.close()
 
 
 
