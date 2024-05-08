@@ -60,6 +60,7 @@ class DlLabel(dl_app.DL_app):
     def get(self, arg_req_id, arg_out_dir='.', arg_type='pdf', arg_format='80x50'):
         """ Get label(-s) from DL """
         ret_str = None
+        files = []
         dl_res = self.dl.dl_get_labels(arg_req_id, arg_format=arg_format, arg_type=arg_type)
         if dl_res is None:
             ret_str = "dl_get_labels res is None"
@@ -74,7 +75,6 @@ class DlLabel(dl_app.DL_app):
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
 
-            files = []
             for idx, lbl in enumerate(dl_res["data"]):
                 file_idx = idx + 1
                 logging.debug('=== lbl[%s], file_idx=%s', idx, file_idx)
