@@ -292,7 +292,7 @@ def main():
             logging.error("dl_request res is None")
         elif "errors" in dl_res.keys():
             logging.error("dl_request errors=%s", dl_res["errors"])
-            err_str = ','.join([dl_res["errors"][0]["title"]] + dl_res["errors"][0]["fields"])
+            err_str = ','.join([dl_res["errors"][0]["detail"]] + dl_res["errors"][0]["fields"])
             print(err_str, file=sys.stderr, end='', flush=True)
         elif app.dl.status_code == 200:
             logging.debug('dl_res=%s', json.dumps(dl_res,
