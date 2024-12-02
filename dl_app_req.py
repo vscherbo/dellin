@@ -309,7 +309,7 @@ def main():
 UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
 ret_msg=NULL, req_id=%s, req_barcode=%s
 WHERE shp_id=%s;""", (loc_status, now, app.dl.status_code, dl_data["requestID"],
-                      dl_data["barcode"], args.shp_id))
+                      dl_data.get("barcode"), args.shp_id))
                 print(f'{dl_data["requestID"]}@{dl_data["barcode"]}', end='', flush=True)
             else:
                 upd_sql = app.pgdb.curs.mogrify(u"""
