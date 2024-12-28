@@ -107,7 +107,10 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         logging.info('inn_sql=%s', inn_sql)
         if self.pgdb.run_query(inn_sql, dict_mode=True) == 0:
             res_inn = self.pgdb.curs_dict.fetchone()
-            logging.info('res_inn=%s', res_inn["inn"])
+            if res_inn is None:
+                logging.warning('None result for inn_sql=%s', inn_sql)
+            else:
+                logging.info('res_inn=%s', res_inn["inn"])
         #
         loc_receiver = Member(
             ca_id=rec["rcv_ca_id"],
