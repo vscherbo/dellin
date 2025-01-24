@@ -31,7 +31,7 @@ INN_TO_UID = {
 '7816676981': '20e9d75b-0ec3-450c-b5d3-8b5b93b23a4f'
         }
 
-def err_handler(arg_res):
+def err_formatter(arg_res):
     """ makes error string """
     err_list = []
     for err in arg_res["errors"]:
@@ -281,7 +281,7 @@ def main():
         elif "errors" in dl_res.keys():
             logging.error("dl_request errors=%s", dl_res["errors"])
             # err_str = ','.join([dl_res["errors"][0]["detail"]] + dl_res["errors"][0]["fields"])
-            err_str = err_handler(dl_res)
+            err_str = err_formatter(dl_res)
             print(err_str, file=sys.stderr, end='', flush=True)
         elif app.dl.status_code == 200:
             logging.debug('dl_res=%s', json.dumps(dl_res,
