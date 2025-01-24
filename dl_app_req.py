@@ -14,17 +14,6 @@ from pg_app import PGapp
 
 import dl_app
 
-SQL = """ SELECT dl_counteragents.inn AS sender_inn, dl_counteragents_1.inn AS receiver_inn,
-delivery.term_id AS terminal_id
-FROM ((ext.dl_addresses AS dl_addresses_1
-INNER JOIN (((ship_bills
-INNER JOIN shipments ON ship_bills.shp_id = shipments.shp_id)
-INNER JOIN delivery ON ship_bills.dlvrid = delivery.dlvr_id)
-INNER JOIN ext.dl_addresses ON shipments.firm_addr_id = dl_addresses.id) ON dl_addresses_1.id = delivery.dlvr_addr_id)
-INNER JOIN ext.dl_counteragents AS dl_counteragents_1 ON dl_addresses_1.ca_id = dl_counteragents_1.id)
-INNER JOIN ext.dl_counteragents ON dl_addresses.ca_id = dl_counteragents.id
-WHERE shipments.shp_id=%s;"""
-
 INN_SQL = "SELECT inn FROM ext.dl_counteragents WHERE id=%s;"
 
 TERM_ID_SQL = "SELECT terminal_id FROM shp.vw_dl_addresses WHERE id=%s;"
@@ -41,6 +30,16 @@ INN_TO_UID = {
 #'7816316876': 'fe56ca78-d06e-489e-a5de-8f98885ac80b',
 '7816676981': '20e9d75b-0ec3-450c-b5d3-8b5b93b23a4f'
         }
+
+def err_handler(arg_res):
+    """ makes error string """
+    err_list = []
+    for err in arg_res["errors"]:
+        err_list.append(f'{err["detail"]}: {err["fields"]}')
+
+    err_str = '/'.join(err_list)
+    return err_str
+
 
 @dataclasses.dataclass
 class Member:
@@ -90,8 +89,6 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         #self._req_params = ReqParams()
         self._req_params = None
 
-#sql_str = self.curs.mogrify(SQL, (shp_id,))
-
     def _get_req_params(self):
         """ Get req params from DB """
         self.pgdb.curs_dict.callproc('dl_req_params', (self.shp_id,))
@@ -126,7 +123,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             wepay=rec["wepay"],
             boxes=rec["boxes"],
             pre_shipdate=rec["pre_shipdate"],
-            delivery_type=rec["delivery_type"],  # TODO 1, 4, 6 - auto, express, avia
+            delivery_type=rec["delivery_type"],  # TOD0 1, 4, 6 - auto, express, avia
             is_terminal=rec["is_terminal"],
             our_uid=INN_TO_UID[res_inn["inn"]]
                 )
@@ -164,15 +161,6 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             if res_term is not None:
                 logging.info('res_term=%s', res_term[0])
                 delivery_arrival["terminalID"] = res_term[0]
-            """
-            # SELECT terminal_id FROM shp.vw_dl_addresses WHERE id = 46729939
-            term_sql = self.pgdb.curs_dict.mogrify(TERM_ID_SQL, (loc_addr_id ,))
-            logging.info('term_sql=%s', term_sql)
-            if self.pgdb.run_query(term_sql, dict_mode=True) == 0:
-                res_term = self.pgdb.curs_dict.fetchone()
-                logging.info('res_term=%s', res_term["terminal_id"])
-                delivery_arrival["terminalID"] = res_term["terminal_id"]
-            """
         else:
             delivery_arrival["variant"] = 'address'
             delivery_arrival["addressID"] = loc_addr_id
@@ -283,10 +271,7 @@ def main():
 
     app = DLreq(args=args, description='DL request v2')
     logging.info("args=%s", args)
-    """
-    dl_res = app.req(args.shp_id)
-    logging.info("dl_res=%s", dl_res)
-    """
+
     if app.login(auth=True):
         #arg = [].append(args.doc_id)
         logging.info('args.shp_id=%s', args.shp_id)
@@ -295,7 +280,8 @@ def main():
             logging.error("dl_request res is None")
         elif "errors" in dl_res.keys():
             logging.error("dl_request errors=%s", dl_res["errors"])
-            err_str = ','.join([dl_res["errors"][0]["detail"]] + dl_res["errors"][0]["fields"])
+            # err_str = ','.join([dl_res["errors"][0]["detail"]] + dl_res["errors"][0]["fields"])
+            err_str = err_handler(dl_res)
             print(err_str, file=sys.stderr, end='', flush=True)
         elif app.dl.status_code == 200:
             logging.debug('dl_res=%s', json.dumps(dl_res,
@@ -308,20 +294,20 @@ def main():
                 else:
                     loc_status = 1
 
-                upd_sql = app.pgdb.curs.mogrify(u"""
+                upd_sql = app.pgdb.curs.mogrify("""
 UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
 ret_msg=NULL, req_id=%s, req_barcode=%s
 WHERE shp_id=%s;""", (loc_status, now, app.dl.status_code, dl_data["requestID"],
                       dl_data.get("barcode"), args.shp_id))
                 print(f'{dl_data["requestID"]}@{dl_data["barcode"]}', end='', flush=True)
             else:
-                upd_sql = app.pgdb.curs.mogrify(u"""
+                upd_sql = app.pgdb.curs.mogrify("""
 UPDATE shp.dl_preorder_params SET sts_code=%s, upddate=%s, ret_code=%s,
 ret_msg=%s
 WHERE shp_id=%s;""", (9, now, app.dl.status_code, json.dumps(dl_data, ensure_ascii=False),
     args.shp_id))
 
-            logging.info(u"upd_sql=%s", upd_sql)
+            logging.info("upd_sql=%s", upd_sql)
             app.pgdb.curs.execute(upd_sql)
             app.pgdb.conn.commit()
 
