@@ -12,6 +12,11 @@ args = dl_app.parser.parse_args()
 app = dl_app.DL_app(args=args, description='DL counteragents info')
 logging.info("args=%s", args)
 
+INS_CA = """ INSERT INTO ext.dl_our_ca(uid, inn, firm_name) VALUES(%s,%s,%s)
+ON CONFLICT (uid) DO UPDATE
+set inn=EXCLUDED.inn, firm_name=EXCLUDED.firm_name; """
+
+# ON CONFLICT DO NOTHING;"""
 
 if app.login(auth=True):
     #arg = [].append(args.doc_id)
@@ -24,6 +29,8 @@ if app.login(auth=True):
         logging.debug('counteragents=%s',
                 json.dumps(dl_res["data"]["counteragents"], ensure_ascii=False, indent=4))
         res = []
+        app.db_login()
+        curs = app.conn.cursor()
         for ca in dl_res["data"]["counteragents"]:
             ca_info = {}
             ca_info["uid"] = ca["uid"]
@@ -32,7 +39,13 @@ if app.login(auth=True):
                 ca_info["name"] = ca["name"]
                 #print(f'{ca["uid"]}^{ca["inn"]}^{ca["name"]}')
                 res.append(ca_info)
-        logging.info('res=%s', res)
+                # insert into PG
+                loc_sql = curs.mogrify(INS_CA, (ca["uid"], ca["inn"], ca["name"]))
+                logging.info("loc_sql=%s", loc_sql.decode('utf8'))
+                curs.execute(loc_sql)
+
+        app.conn.commit()
+        # logging.info('res=%s', res)
     else:
         err_str = f'ERROR={app.dl.err_msg}'
         logging.error(err_str)
