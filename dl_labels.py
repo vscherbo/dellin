@@ -14,6 +14,19 @@ import dl_app
 #from datetime import datetime
 
 
+def _err_handler(arg_title, arg_res):
+    """ An errors handler """
+    if arg_res is None:
+        ret_str = f"{arg_title} res is None"
+        logging.error(ret_str)
+    elif "errors" in arg_res.keys():
+        logging.error("%s errors=%s", arg_title, arg_res["errors"])
+        err_list = []
+        for err in arg_res["errors"]:
+            err_list.append(f'{err["detail"]}: {err["fields"]}')
+
+        err_str = ' ,'.join(err_list)
+    return err_str
 
 class DlLabel(dl_app.DL_app):
     """ Class for asking and getting DL labels """
@@ -27,35 +40,17 @@ class DlLabel(dl_app.DL_app):
         ret_str = None
         dl_res = self.dl.dl_labels(arg_req_id, arg_shp_id, arg_boxes)
         logging.info('dl_labels: dl_res=%s', dl_res)
-        if dl_res['metadata']['status'] == 200 and dl_res['data']['state'] == 'enqueued':
+        try:
+            #if dl_res['metadata']['status'] == 200 and dl_res['data']['state'] == 'enqueued':
             logging.info('%s', dl_res['data'])
-        elif "errors" in dl_res.keys():
-            """
-            logging.error("dl_labels errors=%s", dl_res["errors"])
-            err_list = []
-            for err in dl_res["errors"]:
-                err_list.append(f'{err["detail"]}: {err["fields"]}')
+        except KeyError:
+            logging.warning("NO dl_res['data'] in the answer")
+            ret_str = _err_handler('ask labels', dl_res)
 
-            err_str = ' ,'.join(err_list)
-            #print(err_str, file=sys.stderr, end='', flush=True)
-            ret_str = err_str
-            """
-            ret_str = self._err_handler('ask labels', dl_res)
+        # elif "errors" in dl_res.keys():
+        #    ret_str = _err_handler('ask labels', dl_res)
         return ret_str
 
-    def _err_handler(self, arg_title, arg_res):
-        """ An errors handler """
-        if arg_res is None:
-            ret_str = f"{arg_title} res is None"
-            logging.error(ret_str)
-        elif "errors" in arg_res.keys():
-            logging.error("%s errors=%s", arg_title, arg_res["errors"])
-            err_list = []
-            for err in arg_res["errors"]:
-                err_list.append(f'{err["detail"]}: {err["fields"]}')
-
-            err_str = ' ,'.join(err_list)
-        return err_str
 
     def get(self, arg_req_id, arg_out_dir='.', arg_type='pdf', arg_format='80x50'):
         """ Get label(-s) from DL """
@@ -66,7 +61,7 @@ class DlLabel(dl_app.DL_app):
             ret_str = "dl_get_labels res is None"
             logging.error(ret_str)
         elif "errors" in dl_res.keys():
-            ret_str = self._err_handler('dl_get_labels', dl_res)
+            ret_str = _err_handler('dl_get_labels', dl_res)
         elif self.dl.status_code == 200 and dl_res['metadata']['totalPages'] > 0:
             logging.info("dl_res['metadata']=%s", dl_res['metadata'])
             # Check if the directory exists, if not, create it
@@ -82,7 +77,7 @@ class DlLabel(dl_app.DL_app):
                 filename = os.path.join(filepath, f'{arg_req_id}_{file_idx}.{arg_type}')
                 with open(filename, "wb") as barcode_output:
                     try:
-                        # TODO downloaded multiple labels
+                        # TOD0 downloaded multiple labels
                         #content = base64.b64decode(dl_res["data"][0]["base64"])
                         content = base64.b64decode(lbl["base64"])
                         barcode_output.write(content)
