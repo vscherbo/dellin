@@ -14,7 +14,7 @@ logging.info("args=%s", args)
 
 INS_CA = """ INSERT INTO ext.dl_our_ca(uid, inn, firm_name) VALUES(%s,%s,%s)
 ON CONFLICT (uid) DO UPDATE
-set inn=EXCLUDED.inn, firm_name=EXCLUDED.firm_name; """
+set inn=EXCLUDED.inn, firm_name=EXCLUDED.firm_name, set dt_change = now(); """
 
 # ON CONFLICT DO NOTHING;"""
 
