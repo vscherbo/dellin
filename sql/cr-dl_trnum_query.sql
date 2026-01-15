@@ -1,5 +1,4 @@
---
-DROP FUNCTION shp.dl_trnum_query(in_query_dt timestamp without time ZONE);
+-- DROP FUNCTION shp.dl_trnum_query(in_query_dt timestamp without time ZONE);
 
 CREATE OR REPLACE FUNCTION shp.dl_trnum_query(in_query_dt timestamp without time zone DEFAULT now(),
     OUT shp_id integer, OUT sender_inn text, OUT receiver_inn text, OUT dl_dt text)
@@ -21,7 +20,7 @@ SELECT distinct s.shp_id
      join shp.delivery d on sb.dlvrid = d.dlvr_id 
      join "Предприятия" e on e."Код" = b."Код" 
      join "Фирма" f on f."КлючФирмы" = b."фирма" 
-  WHERE s.shipdate > '2018-12-06' and d.carr_id = 6
+  WHERE s.shipdate > '2025-07-01' and d.carr_id = 6
         and (s.carr_doc IS null or s.carr_doc = '')
         and e."ИНН" <> '000000000000'
   -- WHERE s.shipdate IS NOT NULL AND s.carr_doc IS NULL
