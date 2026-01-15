@@ -39,7 +39,7 @@ BEGIN
        cmd := format('%s --shp_id=% --boxes=%s', cmd, loc_shp_id, loc_boxes);
     ELSE
        -- get format, type for arg_req_id
-       SELECT label_format, label_type INTO loc_format, loc_type FROM shp.dl_labels WHERE prereq_id = arg_req_id;
+       SELECT label_format, label_type INTO loc_format, loc_type FROM shp.dl_labels_q WHERE prereq_id = arg_req_id;
        RAISE NOTICE 'mode=get: format=%, type=%', loc_format, loc_type;
        cmd := format('%s --format=%s --type=%s', cmd, loc_format, loc_type);
     END IF;
@@ -83,7 +83,7 @@ BEGIN
 
     RAISE NOTICE 'loc_status=%, loc_msg=%', loc_status, loc_msg;
     -- update
-    UPDATE shp.dl_label SET status = loc_status, err_msg = loc_msg, last_dt = now()
+    UPDATE shp.dl_labels_q SET status = loc_status, err_msg = loc_msg, last_dt = now()
     WHERE prereq_id = arg_req_id;
     
     RETURN ret_str;
