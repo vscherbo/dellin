@@ -20,7 +20,7 @@ import psycopg2.extras
 
 import dl_app
 
-EMAIL_TO = "vscherbo@kipspb.ru"
+EMAIL_TO = "vscherbo@it.kipspb.ru"
 #EMAIL_TO = "delivery-dl@kipspb.ru"
 
 SHP_CMD_TEMPLATE = """INSERT INTO shp.vs_dl_tracking(\
@@ -105,7 +105,7 @@ def valid_date(date_str):
         datetime.strptime(date_str, "%Y-%m-%d")
         return date_str
     except ValueError:
-        msg = "Not a valid date: '{0}'.".format(date_str)
+        msg = f"Not a valid date: {date_str}"
         raise argparse.ArgumentTypeError(msg)
 
 def send_email(arg_to, arg_subj, arg_msg):
