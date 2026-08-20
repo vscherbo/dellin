@@ -77,7 +77,11 @@ doc_date)\
         if tracker_res is None:
             logging.error("dl_tracker_adv res is None")
         elif tracker_res.get("errormsg", "") != "":
-            logging.error("dl_tracker_adv errormsg=%s", tracker_res["errormsg"])
+            loc_err = tracker_res.get("errormsg", "")
+            if loc_err == 'Ничего не найдено':
+                logging.info("dl_tracker_adv INFO errmsg=%s", loc_err)
+            else:
+                logging.error("dl_tracker_adv errormsg=%s", loc_err)
         elif "orders" in tracker_res:
             # logging.debug(dl.text)
             # logging.info(tracker_res["orders"]["tracker"][0]["order"]['docNumber'])
