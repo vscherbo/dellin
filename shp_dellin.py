@@ -15,12 +15,12 @@ class DellinAPI():
     Base class for api.dellin.ru
     """
     host = "https://api.dellin.ru"
-    url_login = f"{host}/v1/customers/login.json"
+    url_login = f"{host}/v3/auth/login.json"
+    url_logout = f"{host}/v3/auth/logout.json"
     url_sfrequest = f"{host}/v1/customers/sfrequest.json"
     url_tracker = f"{host}/v2/public/tracker.json"
     url_tracker_adv = f"{host}/v1/public/tracker_advanced.json"
     url_calculator = f"{host}/v1/public/calculator.json"
-    url_logout = f"{host}/v1/customers/logout.json"
     url_orders = f"{host}/v2/customers/orders.json"
     url_orders_v3 = f"{host}/v3/orders.json"
     # справочник контрагентов
@@ -29,7 +29,7 @@ class DellinAPI():
     # наши фирмы, подключённые к ЛК
     url_counteragents = f"{host}/v1/customers/counteragents.json"
     # список адресов контрагента
-    url_addresses = f"{host}/v1/customers/book/addresses.json"
+    url_addresses = f"{host}/v2/customers/book/addresses.json"
     url_dir_countries = f"{host}/v1/public/countries.json"
     url_dir_opf_list = f"{host}/v1/public/opf_list.json"
     url_dir_places = f"{host}/v1/public/places.json"
