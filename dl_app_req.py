@@ -226,8 +226,16 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             "role": "sender",
             "uid": self._req_params.our_uid
         }
+        # Request.Members.signer
+        members_signer = {
+            "role": "sender",
+            # lkEdoUID: "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
+            # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
+            "eltcForwarderReqKind": 'SUPER_SERVICE'  # с 2026-09-01 кроме ОСЗ, для которого DRAFT
+        }
         members = {
             "requester": members_requester,
+            "signer": members_signer,
             "sender": self._member('sender'),
             "receiver": self._member('receiver')
         }

@@ -52,6 +52,7 @@ class DellinAPI():
     url_labels = f"{host}/v2/request/cargo/shipment_labels.json"
     url_get_labels = f"{host}/v2/request/cargo/shipment_labels/get.json"
     url_counteragents_v2 = f"{host}/v2/counteragents.json"
+    url_lk_edo = f"{host}/v1/suggest/lk_edo.json"
     headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
 
     def __init__(self, app_key, login=None, password=None):
@@ -519,6 +520,19 @@ class DellinAPI():
         if full_info:
             self.payload["full_info"] = str(full_info)
         return self._dl_post(self.url_counteragents_v2)
+
+
+    def dl_get_lk_edo(self, params):
+        self.payload = params.copy()
+        self.payload.update(self._customers_auth())
+        # data = params.copy()
+        # data.update(self._customers_auth())
+        # logging.info('data=%s'.format(data))
+        if self.session_id:
+            return self._dl_post(self.url_lk_edo)
+            # return requests.post(self.url_request, data=json.dumps(data),
+            #                      headers=self.headers).json()
+        return self.payload
 
     def dl_logout(self):
         self.payload = self._customers_auth()
