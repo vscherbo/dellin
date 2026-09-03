@@ -14,10 +14,24 @@ from pg_app import PGapp
 
 import dl_app
 
+INN_SQL = "SELECT inn FROM ext.dl_counteragents WHERE id=%s;"
 UID_SQL = """SELECT uid FROM ext.dl_our_ca WHERE inn=(SELECT inn FROM ext.dl_counteragents
 WHERE id=%s);"""
 
 TERM_ID_SQL = "SELECT terminal_id FROM shp.vw_dl_addresses WHERE id=%s;"
+
+INN_TO_UID = {
+'7802715214': 'B1BC6E79-1591-11E1-B592-02215ECC9D4B',
+'7802731174': 'AC65DB70-9142-11E2-98F4-E61F13ED5CB9',
+'7804431521': '8710c33e-4480-4e9f-ace2-69b3845676e1',
+'7805345064': '5078588d-b3af-4140-9660-5251a2e79104',
+'7805599407': '09D59E9F-5BE4-11E2-B398-0050569420A4',
+'7805781663': 'ab5c3b1c-e27d-4f83-8d0f-e3df07452576',
+'7805812449': 'd3e555ce-a21b-4a5a-8c23-7b517fef3054',
+'7816316876': '569f5b62-9779-46f4-908a-abf470aa0a57',
+#'7816316876': 'fe56ca78-d06e-489e-a5de-8f98885ac80b',
+'7816676981': '20e9d75b-0ec3-450c-b5d3-8b5b93b23a4f'
+        }
 
 def err_formatter(arg_res):
     """ makes error string """
@@ -191,7 +205,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         cargo_width = 0.1
         cargo_height = 0.1
         cargo_weight = 0.5
-        cargo_total_volume = 0.001
+        cargo_total_volume = cargo_length*cargo_width*cargo_height
         cargo_total_weight = 0.5
 
         cargo = {
@@ -229,13 +243,17 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         # Request.Members.signer
         members_signer = {
             "role": "sender",
-            # lkEdoUID: "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
+            # "lkEdoUID": "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
             # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
+            # ИЛИ "emai": "mailbox@example.ru"
             "eltcForwarderReqKind": 'SUPER_SERVICE'  # с 2026-09-01 кроме ОСЗ, для которого DRAFT
         }
         members = {
             "requester": members_requester,
-            "signer": members_signer,
+            # "signer": members_signer,
+            # NEED
+            # Cargo - "originCountry":{ "codeOksmNumeric":"36" }
+            # delivery - customerPackages
             "sender": self._member('sender'),
             "receiver": self._member('receiver')
         }
