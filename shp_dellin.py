@@ -53,6 +53,7 @@ class DellinAPI():
     url_get_labels = f"{host}/v2/request/cargo/shipment_labels/get.json"
     url_counteragents_v2 = f"{host}/v2/counteragents.json"
     url_lk_edo = f"{host}/v1/suggest/lk_edo.json"
+    url_customer_packages  = f"{host}/v1/references/customer_packages.json"
     headers = {'Content-type': 'application/json', 'User-Agent': 'Python'}
 
     def __init__(self, app_key, login=None, password=None):
@@ -522,7 +523,10 @@ class DellinAPI():
         return self._dl_post(self.url_counteragents_v2)
 
 
-    def dl_get_lk_edo(self, params):
+    def dl_lk_edo(self, params):
+        """ список UID личных кабинетов (ЛК) операторов электронного документооборота (ЭДО),
+        доступных клиенту
+        """
         self.payload = params.copy()
         self.payload.update(self._customers_auth())
         # data = params.copy()
@@ -534,7 +538,19 @@ class DellinAPI():
             #                      headers=self.headers).json()
         return self.payload
 
+    def dl_customer_packages(self, name=None):
+        """ информация о видах собственной упаковки клиента """
+        self.payload = {}
+        if name:
+            self.payload["name"] = name
+        self.payload.update(self._customers_auth())
+        if self.session_id:
+            return self._dl_post(self.url_customer_packages)
+
+        return self.payload
+
     def dl_logout(self):
+        """ logout """
         self.payload = self._customers_auth()
         return self._dl_post(self.url_logout)
 
