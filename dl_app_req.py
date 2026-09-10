@@ -7,18 +7,21 @@ import dataclasses
 import json
 import logging
 import sys
-from datetime import date, datetime
+from datetime import date, datetime  # , timedelta
 
 import log_app
-from pg_app import PGapp
+import psycopg2.extras
 
 import dl_app
+from pg_app import PGapp
 
 INN_SQL = "SELECT inn FROM ext.dl_counteragents WHERE id=%s;"
 UID_SQL = """SELECT uid FROM ext.dl_our_ca WHERE inn=(SELECT inn FROM ext.dl_counteragents
 WHERE id=%s);"""
 
 TERM_ID_SQL = "SELECT terminal_id FROM shp.vw_dl_addresses WHERE id=%s;"
+
+# ОСЗ '7802715214': 'B1BC6E79-1591-11E1-B592-02215ECC9D4B',
 
 INN_TO_UID = {
 '7802715214': 'B1BC6E79-1591-11E1-B592-02215ECC9D4B',
@@ -81,6 +84,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         self.get_config(config_filename)
         self.pgdb = PGapp(pg_host=self.config['PG']['pg_host'],
                           pg_user=self.config['PG']['pg_user'])
+        # if self.pgdb.pg_connect(dict_cursor_factory=psycopg2.extras.DictCursor):
         if self.pgdb.pg_connect():
             self.pgdb.set_session(autocommit=True)
             #self.api = dl_app.DL_app(args)
@@ -176,7 +180,12 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         # "request.payment.primaryPayer"
         #delivery_derival["payer"] = self.delivery_payer[self._req_params.wepay]
 
+        # PROD!
         delivery_derival["produceDate"] = date.strftime(self._req_params.pre_shipdate, '%Y-%m-%d')
+        # DEBUG Вычисляем завтрашнюю дату и форматируем её
+        # tomorrow_date = date.today() + timedelta(days=1)
+        # delivery_derival["produceDate"] = tomorrow_date.strftime('%Y-%m-%d')
+        # end of DEBUG
         delivery_derival["variant"] = 'terminal'
         #delivery_derival["terminalID"] = self._req_params.members['sender'].addr_id
         delivery_derival["terminalID"] = 1  # Парнас
@@ -187,7 +196,9 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         delivery = {
                 "deliveryType": {"type": self.delivery_type[self._req_params.delivery_type]},
                 "derival": self._derival(),
-                "arrival": self._arrival()
+                "arrival": self._arrival(),
+                # customerPackages "07d3e508-d648-4cbd-b0c7-4f721e2f59c9" Коробка
+                "customerPackages": [{"uid": "07d3e508-d648-4cbd-b0c7-4f721e2f59c9"}],
                 }
         logging.info("delivery=%s", delivery)
         return delivery
@@ -205,7 +216,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
         cargo_width = 0.1
         cargo_height = 0.1
         cargo_weight = 0.5
-        cargo_total_volume = cargo_length*cargo_width*cargo_height
+        cargo_total_volume = cargo_length*cargo_width*cargo_height  # ?round(..., 4)
         cargo_total_weight = 0.5
 
         cargo = {
@@ -219,6 +230,19 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             "insurance": insurance,
             "freight_uid": "0xbfff425683f453bb413cb1ddc65d155c"  # 'Комплектующие'
         }
+
+        self.pgdb.curs_dict.callproc('dl_okms_code', (self.shp_id,))
+        rec = self.pgdb.curs_dict.fetchone()
+        logging.info('rec[0]=%s', rec[0])
+        loc_okms_code = rec[0]
+        cargo["originCountry"] = {"codeOksmNumeric": loc_okms_code}
+
+        # if self._req_params.our_uid == 'b1bc6e79-1591-11e1-b592-02215ecc9d4b':  # ОСЗ
+        #     # cargo["originCountry"] = {"codeOksmNumeric": "156"}  # КНР !!! HARDCODED
+        #     cargo["originCountry"] = {"codeOksmNumeric": "643"}  # РФ !!! HARDCODED
+        # else:
+        #     cargo["originCountry"] = {"codeOksmNumeric": "156"}  # Китай !!! HARDCODED
+
         logging.info("cargo=%s", cargo)
         return cargo
 
@@ -240,23 +264,40 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             "role": "sender",
             "uid": self._req_params.our_uid
         }
-        # Request.Members.signer
-        members_signer = {
-            "role": "sender",
-            # "lkEdoUID": "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
-            # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
-            # ИЛИ "emai": "mailbox@example.ru"
-            "eltcForwarderReqKind": 'SUPER_SERVICE'  # с 2026-09-01 кроме ОСЗ, для которого DRAFT
-        }
         members = {
             "requester": members_requester,
-            # "signer": members_signer,
-            # NEED
-            # Cargo - "originCountry":{ "codeOksmNumeric":"36" }
-            # delivery - customerPackages
             "sender": self._member('sender'),
             "receiver": self._member('receiver')
         }
+        # Request.Members.signer
+        if self._req_params.our_uid == 'b1bc6e79-1591-11e1-b592-02215ecc9d4b':  # ОСЗ
+            members_signer = {
+                # https://dev.dellin.ru/api/ordering/ltl-request/#_header17
+                "role": "sender",  # должно совпадать с "members.requester.role"
+                # "lkEdoUID": "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
+                # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
+                # ИЛИ "emai"
+                "emails": ['etrn@kipspb.ru'],
+                "eltcForwarderReqKind": 'DRAFT'  # с 2026-09-01 кроме ОСЗ, для которого DRAFT
+            }
+        else:
+            members_signer = {
+                # https://dev.dellin.ru/api/ordering/ltl-request/#_header17
+                "role": "sender",  # должно совпадать с "members.requester.role"
+                # "lkEdoUID": "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
+                # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
+                # ИЛИ "emails"
+                # "emails": ['buh@kipspb.ru'],
+                "eltcForwarderReqKind": 'SUPER_SERVICE'  # с 2026-09-01 кроме ОСЗ
+            }
+
+        members["signer"] = members_signer
+        # NEED
+        # Cargo - "originCountry":{ "codeOksmNumeric":"36" }
+        # 156 - КНР
+        # 643 - РФ
+        # delivery - customerPackages
+
         logging.info("members=%s", members)
         return members
 
