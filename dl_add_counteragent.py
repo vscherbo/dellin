@@ -6,8 +6,8 @@
 
 import logging
 import sys
-import dl_app
 
+import dl_app
 
 """
 1. ?Проверка отсутствия такого контрагента
@@ -162,7 +162,8 @@ VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
         if ret_addr_kladr_street is None or ret_addr_kladr_street == '':
             custom_street = {}
             custom_street["code"] = ret_addr_city_code.ljust(25, '0')
-            custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
+            # #custom_street["street"] = ret_street_type or 'ул. Отсутствующая'
+            custom_street["street"] = '{} {}'.format(ret_street_type, ret_street) or 'ул. Отсутствующая'
             jur_address["customStreet"] = custom_street
         else:
             jur_address["street"] = ret_addr_kladr_street
