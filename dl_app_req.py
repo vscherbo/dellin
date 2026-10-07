@@ -274,7 +274,7 @@ class DLreq(dl_app.DL_app, log_app.LogApp):
             members_signer = {
                 # https://dev.dellin.ru/api/ordering/ltl-request/#_header17
                 "role": "sender",  # должно совпадать с "members.requester.role"
-                # "lkEdoUID": "TODO_UUID",  # с 2026-09-01 _обязательный_ для ОСЗ,
+                "lkEdoUID": "2BE7B3AB040F84011E28450005056917125",
                 # СБИС-Тензор 2BE7B3AB040F84011E28450005056917125
                 # ИЛИ "emai"
                 "emails": ['etrn@kipspb.ru'],
